@@ -11,12 +11,14 @@ axum = "0.6.1"
 axum-macros = "0.3.0"
 directories = "4.0.1"
 http = "0.2.8"
+http-serde = "1.1.2"
 serde = { version = "1.0.150", features = ["derive"] }
 serde_json = "1.0.89"
 sqlx = { version = "0.6.2", features = ["sqlite", "runtime-tokio-rustls"] }
 tokio = { version = "1.23.0", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
+uuid = { version = "1.2.2", features = ["v4", "fast-rng", "serde"] }
 
 [dev-dependencies]
 tempfile = "3.3.0"
