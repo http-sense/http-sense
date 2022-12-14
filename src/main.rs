@@ -18,9 +18,19 @@ async fn main() -> anyhow::Result<()> {
     let db = DB::connect(&get_database_file()?).await?;
     let shared_db = Arc::new(db);
     let proxy_db = shared_db.clone();
+    let ui_db = shared_db.clone();
     let args = cli::CLIArgs::parse();
 
-    proxy_server::start_proxy(proxy_db, args.proxy_port, &args.proxy_addr).await?;
+    tokio::select! {
+        v = proxy_server::start_server(proxy_db, args.proxy_port, &args.proxy_addr) => {
+            tracing::error!("Proxy server has stopped");
+            v?;
+        }
+        j = ui_server::start_server(ui_db, args.ui_port, &args.ui_addr) => {
+            tracing::error!("UI server has stopped");
+            j?;
+        }
+    };
 
     Ok(())
 }

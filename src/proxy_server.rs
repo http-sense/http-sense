@@ -19,7 +19,7 @@ struct AppState {
     db: Arc<DB>,
 }
 
-pub async fn start_proxy(db: Arc<DB>, proxy_port: u16, proxy_addr: &str) -> anyhow::Result<()> {
+pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str) -> anyhow::Result<()> {
     let app_state = AppState { db };
 
     let app = Router::new()
@@ -33,7 +33,7 @@ pub async fn start_proxy(db: Arc<DB>, proxy_port: u16, proxy_addr: &str) -> anyh
         .serve(app.into_make_service())
         .await?;
 
-    tracing::info!("Axum has ended");
+    tracing::info!("Proxy Server has ended");
     Ok(())
 
 }
@@ -43,16 +43,10 @@ async fn handle_incoming_request(
     mut request: Request<Body>,
 ) -> anyhow::Result<impl IntoResponse> {
     let uri = request.uri().clone();
-    if uri.path() == "/hello" {
-        let rows = state.db.get_recent_requests().await?;
-        return Ok(Json(rows));
-    }
     let headers = request.headers().clone();
     let method =  request.method().clone();
     let mut body = request.into_body();
-    // let j = body.clone();
     let data = hyper::body::to_bytes(body).await?;
-    // let j = body.to_bytes();
     let uuid = uuid::Uuid::new_v4();
     state
         .db
@@ -65,16 +59,13 @@ async fn handle_incoming_request(
         })
         .await?;
     
-    
-    
-
-    Ok(Json(vec![]))
+    Ok(Json("Trust me, this is the response your server gave!"))
 
 }
 // TODO:  Error handling -- Any T that implements From<T> for StatusCode should not able handled by INTERNAL SERVER ERROR
 
 // basic handler that responds with a static string
-// #[axum_macros::debug_handler]
+#[axum_macros::debug_handler]
 async fn root(
     State(state): State<AppState>,
     request: Request<Body>,
