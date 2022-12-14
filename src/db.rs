@@ -6,6 +6,7 @@ use sqlx::sqlite::SqliteExecutor;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::Connection;
 use crate::model::RequestData;
+use crate::model::ResponseData;
 
 #[derive(Debug, Clone)]
 pub struct DB {
@@ -30,6 +31,14 @@ impl TryFrom<DBRow> for RequestData {
     }
 }
 
+impl TryFrom<DBRow> for ResponseData {
+    type Error = anyhow::Error;
+    fn try_from(value: DBRow) -> anyhow::Result<Self> {
+        let result: Self = serde_json::from_str(&value.content)?;
+        Ok(result)
+    }
+}
+
 impl DB {
     pub async fn connect(db_file: &str) -> anyhow::Result<Self> {
         let mut db = Self {
@@ -43,6 +52,18 @@ impl DB {
         sqlx::query!(
             "
                 CREATE TABLE IF NOT EXISTS request (
+                    id INTEGER PRIMARY KEY,
+                    uuid TEXT NOT NULL,
+                    content TEXT NOT NULL
+                )
+            "
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        sqlx::query!(
+            "
+                CREATE TABLE IF NOT EXISTS response (
                     id INTEGER PRIMARY KEY,
                     uuid TEXT NOT NULL,
                     content TEXT NOT NULL
@@ -100,6 +121,19 @@ impl DB {
         Ok(())
     }
 
+    pub async fn insert_response(&self, res: &ResponseData) -> anyhow::Result<()> {
+        // Method
+        let uuid_ser = serde_json::to_string(&res.uuid)?;
+        let content = serde_json::to_string(res)?;
+        dbg!(&uuid_ser, &content);
+
+        // http_serde::header_map::serialize(&req.headers, ser)
+        sqlx::query!("INSERT INTO response (uuid, content) VALUES (?, ?)", uuid_ser, content)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     pub async fn get_recent_requests(&self) -> anyhow::Result<Vec<RequestData>> {
         let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM request")
         // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
@@ -107,8 +141,18 @@ impl DB {
             .await?;
         Ok(result.into_iter().map(|x| RequestData::try_from(x)).collect::<anyhow::Result<Vec<_>>>()?)
     }
+
+    pub async fn get_recent_responses(&self) -> anyhow::Result<Vec<ResponseData>> {
+        let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM response")
+        // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(result.into_iter().map(|x| ResponseData::try_from(x)).collect::<anyhow::Result<Vec<_>>>()?)
+    }
+
 }
 
+// TODO: revive
 // #[cfg(test)]
 // mod tests {
 //     use http::Uri;

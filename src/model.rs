@@ -27,13 +27,13 @@ pub struct RequestData {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ResponseData {
-    pub identifier: uuid::Uuid,
+    pub uuid: uuid::Uuid,
 
     #[serde(with = "http_serde::status_code")]
-    pub method: http::StatusCode,
+    pub status_code: http::StatusCode,
 
     #[serde(with = "http_serde::header_map")]
     pub headers: http::HeaderMap,
 
-    pub body: Vec<u8>,
+    pub body: bytes::Bytes,
 }

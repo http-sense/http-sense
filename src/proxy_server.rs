@@ -1,4 +1,4 @@
-use crate::{config::get_database_file, db::DB, model::RequestData};
+use crate::{config::get_database_file, db::DB, model::{RequestData, ResponseData}};
 use anyhow::Context;
 use axum::{
     body::{Body, Bytes},
@@ -54,7 +54,7 @@ async fn handle_incoming_request(
     state
         .db
         .insert_request(&RequestData {
-            uuid,
+            uuid: uuid.clone(),
             uri,
             headers,
             method,
@@ -65,11 +65,23 @@ async fn handle_incoming_request(
     let response = reqwest::get(state.origin).await?;
     let response_builder = http::Response::builder();
     let mut builder = response_builder.status(response.status());
+    let response_headers = response.headers().clone();
+    let response_status = response.status();
     for (name, value) in response.headers().iter() {
         builder = builder.header(name, value);
     }
-    let body = hyper::Body::from(response.bytes().await?);
+    let response_bytes = response.bytes().await?;
+    let body = hyper::Body::from(response_bytes.clone());
     let res = builder.body(body)?;
+
+    let response_data = ResponseData {
+        uuid,
+        body: response_bytes,
+        headers: response_headers,
+        status_code: response_status
+    };
+    state.db.insert_response(&response_data).await?;
+
     return Ok(res);
 
     // return Ok(response);

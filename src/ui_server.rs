@@ -23,7 +23,8 @@ pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str) -> anyhow::R
     let app_state = AppState { db };
 
     let app = Router::new()
-        .route("/*path", get(root))
+        .route("/api/requests", get(get_requests))
+        .route("/api/responses", get(get_responses))
         .with_state(app_state);
 
     let addr: SocketAddr = format!("{}:{}", ui_addr, ui_port).parse()?;
@@ -50,11 +51,35 @@ async fn handle_incoming_request(
 
 // basic handler that responds with a static string
 #[axum_macros::debug_handler]
-async fn root(
+async fn get_requests(
     State(state): State<AppState>,
     request: Request<Body>,
 ) -> Result<impl IntoResponse, StatusCode> {
     handle_incoming_request(state, request)
+        .await
+        .map_err(|e| {
+            tracing::error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })
+}
+
+async fn handle_incoming_req2(
+    state: AppState,
+    request: Request<Body>,
+) -> anyhow::Result<impl IntoResponse> {
+    let rows = state.db.get_recent_responses().await?;
+    return Ok(Json(rows));
+
+}
+// TODO:  Error handling -- Any T that implements From<T> for StatusCode should not be handled by INTERNAL SERVER ERROR
+
+// basic handler that responds with a static string
+#[axum_macros::debug_handler]
+async fn get_responses(
+    State(state): State<AppState>,
+    request: Request<Body>,
+) -> Result<impl IntoResponse, StatusCode> {
+    handle_incoming_req2(state, request)
         .await
         .map_err(|e| {
             tracing::error!("{}", e);
