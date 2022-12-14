@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
     let args = cli::CLIArgs::parse();
 
     tokio::select! {
-        v = proxy_server::start_server(proxy_db, args.proxy_port, &args.proxy_addr) => {
+        v = proxy_server::start_server(proxy_db, args.proxy_port, &args.proxy_addr, &args.origin_url) => {
             tracing::error!("Proxy server has stopped");
             v?;
         }

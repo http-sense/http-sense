@@ -46,7 +46,7 @@ async fn handle_incoming_request(
     return Ok(Json(rows));
 
 }
-// TODO:  Error handling -- Any T that implements From<T> for StatusCode should not able handled by INTERNAL SERVER ERROR
+// TODO:  Error handling -- Any T that implements From<T> for StatusCode should not be handled by INTERNAL SERVER ERROR
 
 // basic handler that responds with a static string
 #[axum_macros::debug_handler]

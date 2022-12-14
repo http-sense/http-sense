@@ -5,7 +5,7 @@ use axum::{
     extract::{Query, State},
     http::StatusCode,
     http::{header::HeaderMap, Request},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{any, get, post},
     Json, Router,
 };
@@ -17,10 +17,12 @@ use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 #[derive(Debug, Clone)]
 struct AppState {
     db: Arc<DB>,
+    origin: url::Url
 }
 
-pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str) -> anyhow::Result<()> {
-    let app_state = AppState { db };
+pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str, origin: &str) -> anyhow::Result<()> {
+    let origin = url::Url::parse(origin)?;
+    let app_state = AppState { db, origin};
 
     let app = Router::new()
         .route("/*path", any(root))
@@ -41,7 +43,8 @@ pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str) -> any
 async fn handle_incoming_request(
     state: AppState,
     mut request: Request<Body>,
-) -> anyhow::Result<impl IntoResponse> {
+// ) -> anyhow::Result<impl IntoResponse> {
+) -> anyhow::Result<http::Response<hyper::Body>> {
     let uri = request.uri().clone();
     let headers = request.headers().clone();
     let method =  request.method().clone();
@@ -59,7 +62,19 @@ async fn handle_incoming_request(
         })
         .await?;
     
-    Ok(Json("Trust me, this is the response your server gave!"))
+    let response = reqwest::get(state.origin).await?;
+    let response_builder = http::Response::builder();
+    let mut builder = response_builder.status(response.status());
+    for (name, value) in response.headers().iter() {
+        builder = builder.header(name, value);
+    }
+    let body = hyper::Body::from(response.bytes().await?);
+    let res = builder.body(body)?;
+    return Ok(res);
+
+    // return Ok(response);
+    
+    // Ok(Json("Trust me, this is the response your server gave!"))
 
 }
 // TODO:  Error handling -- Any T that implements From<T> for StatusCode should not able handled by INTERNAL SERVER ERROR
@@ -69,7 +84,7 @@ async fn handle_incoming_request(
 async fn root(
     State(state): State<AppState>,
     request: Request<Body>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<Response<hyper::Body>, StatusCode> {
     handle_incoming_request(state, request)
         .await
         .map_err(|e| {
