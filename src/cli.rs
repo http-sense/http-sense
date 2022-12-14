@@ -1,22 +1,22 @@
 use clap::Parser;
 
-/// Simple program to greet a person
+type Port = u16;
+type Addr = String;
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct CLIArgs {
+   pub origin_url: String,
 
-   #[arg(short, long)]
-   origin_url: String,
+   #[arg(short='p', long, default_value_t=6100)]
+   pub proxy_port: Port,
 
-   #[arg(short, long, default_value_t=6100)]
-   proxy_port: u32,
+   #[arg(short='a', long, default_value_t={"127.0.0.1".to_string()})]
+   pub proxy_addr: Addr,
 
-   #[arg(short, long, default_value_t={"127.0.0.1".to_string()})]
-   proxy_addr: String,
+   #[arg(long, default_value_t=6101)]
+   pub ui_port: Port,
 
-   #[arg(short, long, default_value_t=6101)]
-   ui_port: u32,
-
-   #[arg(short, long, default_value_t={"127.0.0.1".to_string()})]
-   ui_addr: String,
+   #[arg(long, default_value_t={"127.0.0.1".to_string()})]
+   pub ui_addr: Addr,
 }
