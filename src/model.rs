@@ -22,7 +22,7 @@ pub struct RequestData {
     #[serde(with = "http_serde::header_map")]
     pub headers: http::HeaderMap,
 
-    pub body: Vec<u8>,
+    pub body: bytes::Bytes,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

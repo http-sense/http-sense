@@ -1,11 +1,3 @@
-#![feature(file_create_new)]
-mod config;
-mod db;
-mod cli;
-mod proxy_server;
-mod model;
-mod ui_server;
-
 use crate::{config::get_database_file, db::DB, model::RequestData};
 use anyhow::Context;
 use axum::{
@@ -24,33 +16,27 @@ use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 #[derive(Debug, Clone)]
 struct AppState {
-    db: DB,
+    db: Arc<DB>,
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
-
-    // dbg!(get_database_file());
-
-    let app_state = AppState {
-        db: DB::connect(&get_database_file()?).await?,
-    };
+pub async fn start_proxy(db: Arc<DB>, proxy_port: u16, proxy_addr: &str) -> anyhow::Result<()> {
+    let app_state = AppState { db };
 
     let app = Router::new()
         .route("/*path", any(root))
         .with_state(app_state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 5000));
-    tracing::info!("listening on {}", addr);
+    let addr: SocketAddr = format!("{}:{}", proxy_addr, proxy_port).parse()?;
+    tracing::info!("proxy server listening on {}", addr);
+
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await?;
+
     tracing::info!("Axum has ended");
     Ok(())
+
 }
-
-
 
 async fn handle_incoming_request(
     state: AppState,
