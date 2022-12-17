@@ -1,6 +1,8 @@
 - [x] Add timestamp to requests
-- [ ] Convert bytes to utf-8
+- [x] Convert bytes to utf-8
 - [ ] Add a way to publish the content
+    - [ ] Use supabase postgrest-rs
+- [ ] Improve logging
 - [ ] Handle request timeout
     - [ ] And maybe other errors too
 - [ ] Improve Command line args
@@ -10,7 +12,6 @@
         - port only -> localhost:port
         - no schema -> http:domain
         - schema -> verify http or https
-- [ ] Improve logging
 - [ ] Add a way to publish the content
 
 

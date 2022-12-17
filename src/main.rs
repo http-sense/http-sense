@@ -1,6 +1,7 @@
 #![feature(file_create_new)]
 mod cli;
 mod config;
+mod supabase;
 mod db;
 mod model;
 mod proxy_server;

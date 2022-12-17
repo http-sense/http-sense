@@ -174,6 +174,23 @@ impl DB {
     // }
 }
 
+
+#[async_trait::async_trait]
+pub trait RequestStorage {
+    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64>;
+    async fn store_response(&mut self, req: &ResponseData) -> anyhow::Result<()>;
+}
+
+#[async_trait::async_trait]
+impl RequestStorage for DB {
+    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
+        self.insert_request(req).await
+    }
+    async fn store_response(&mut self, res: &ResponseData) -> anyhow::Result<()> {
+        self.insert_response(res).await
+    }
+}
+
 // TODO: revive
 // #[cfg(test)]
 // mod tests {
