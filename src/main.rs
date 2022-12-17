@@ -2,6 +2,7 @@
 mod cli;
 mod config;
 mod supabase;
+mod socketio;
 mod db;
 mod model;
 mod proxy_server;

@@ -1,10 +1,12 @@
 - [x] Add timestamp to requests
 - [x] Convert bytes to utf-8
+- [ ] Multiple consumer using tokio::sync::broadcast
 - [ ] Add a way to publish the content
     - [x] Use supabase postgrest-rs
-- [ ] Improve logging
+- [ ] Define user rbac flow
 - [ ] Handle request timeout
     - [ ] And maybe other errors too
+- [ ] Improve logging
 - [ ] Improve Command line args
     - Also take port ranges
         - Pick first available if first is busy
@@ -12,7 +14,6 @@
         - port only -> localhost:port
         - no schema -> http:domain
         - schema -> verify http or https
-- [ ] Add a way to publish the content
 
 
 - What is interesting for user:

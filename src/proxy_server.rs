@@ -11,27 +11,84 @@ use axum::{
 };
 
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc, fmt::Debug};
 
+trait MyTrait: RequestStorage + std::fmt::Debug {}
 
-#[derive(Debug, Clone)]
-struct AppState<T: RequestStorage>{
-    db: T,
+#[derive(Debug)]
+struct AppState {
+    // db: [Box<dyn MyTrait>; 5],
+    db: (Box<dyn MyTrait>, Box<dyn MyTrait>, Box<dyn MyTrait>, Box<dyn MyTrait>, Box<dyn MyTrait>),
     origin: url::Url
 }
 
-// impl AppState<T> {
-//     async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<Vec<u64>> {
-//         let futures = self.db.iter_mut(|x| {
-//             x.store_
-//         })
-//     }
-// }
+
+struct ResponseWriter<'a> {
+    app_state: &'a mut AppState,
+    ids: Vec<u64>
+}
+#[derive(Debug)]
+struct NoOpWriter { }
+#[async_trait::async_trait]
+impl RequestStorage for NoOpWriter {
+    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
+        Ok(0)
+    }
+    async fn store_response(&mut self, req: &ResponseData) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
+// impl MyTrait for NoOpWriter {}
+
+impl<T: Debug + RequestStorage> MyTrait for T { }
+impl AppState {
+
+    fn new(mut dbs: Vec<Box<dyn MyTrait>>, origin: url::Url) -> Self {
+        assert!(dbs.len() <= 5, "Max 5 request storages support atm");
+        while (dbs.len() < 5) {
+            dbs.push(Box::new(NoOpWriter{}));
+        }
+
+        AppState { db: (dbs[0], dbs[1], dbs[2], dbs[3], dbs[4]), origin }
+    }
+
+    async fn write_request<'a>(&'a mut self, req: &RequestData) -> anyhow::Result<ResponseWriter<'a>> {
+        let res = futures::future::join5(
+            self.db.0.store_request(req),
+            self.db.1.store_request(req),
+            self.db.2.store_request(req),
+            self.db.3.store_request(req),
+            self.db.4.store_request(req),
+        ).await;
+        let res = vec![
+            res.0?,
+            res.1?,
+            res.2?,
+            res.3?,
+            res.4?,
+        ];
+        Ok(ResponseWriter {
+            app_state: self,
+            ids: res
+
+        })
+        // let rs = futures::future::join_all(tasks).await;
+        // let b: anyhow::Result<Vec<u64>> = rs.into_iter().map(|x| {
+        //     x?
+        // }).collect();
+        // let b = b?;
+
+        // todo!()
+        // a.store_request(req).await;
+    }
+}
+
 
 pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str, origin: &str) -> anyhow::Result<()> {
     let origin = url::Url::parse(origin)?;
     // let app_state = AppState { db: vec![db], origin};
-    let app_state = AppState { db: db, origin};
+    let app_state = Arc::new(AppState::new(vec![Box::new(db)], origin));
 
     let app = Router::new()
         .route("/*path", any(root))
@@ -50,7 +107,7 @@ pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str, origin
 }
 
 async fn handle_incoming_request(
-    mut state: AppState<impl RequestStorage>,
+    mut state: AppState,
     mut request: Request<Body>,
 // ) -> anyhow::Result<impl IntoResponse> {
 ) -> anyhow::Result<http::Response<hyper::Body>> {
@@ -102,7 +159,7 @@ async fn handle_incoming_request(
 // basic handler that responds with a static string
 // #[axum_macros::debug_handler]
 async fn root(
-    State(state): State<AppState<impl RequestStorage>>,
+    State(state): State<AppState>,
     request: Request<Body>,
 ) -> Result<Response<hyper::Body>, StatusCode> {
     handle_incoming_request(state, request)
