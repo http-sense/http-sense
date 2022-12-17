@@ -20,6 +20,9 @@ pub struct RequestData {
     pub headers: http::HeaderMap,
 
     pub body: bytes::Bytes,
+
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub createdAt: chrono::DateTime<chrono::Utc>
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -32,5 +35,13 @@ pub struct ResponseData {
 
     pub body: bytes::Bytes,
 
-    pub request_id: u64
+
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub createdAt: chrono::DateTime<chrono::Utc>
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ResponseError {
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub createdAt: chrono::DateTime<chrono::Utc>
 }

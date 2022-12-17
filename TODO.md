@@ -1,9 +1,10 @@
 - [x] Add timestamp to requests
 - [x] Convert bytes to utf-8
-- [ ] Multiple consumer using tokio::sync::broadcast
+- [x] Multiple consumer using tokio::sync::broadcast
 - [ ] Add a way to publish the content
+    - [ ] Define user rbac flow
     - [x] Use supabase postgrest-rs
-- [ ] Define user rbac flow
+- [ ] Convert body to string
 - [ ] Handle request timeout
     - [ ] And maybe other errors too
 - [ ] Improve logging

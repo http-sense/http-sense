@@ -119,11 +119,11 @@ impl DB {
         Ok(1)
     }
 
-    pub async fn insert_response(&self, res: &ResponseData) -> anyhow::Result<()> {
+    pub async fn insert_response(&self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
         // Method
         let content = serde_json::to_string(res)?;
 
-        let req_id = res.request_id as i64;
+        let req_id = request_id as i64;
         // http_serde::header_map::serialize(&req.headers, ser)
         sqlx::query!(
             "INSERT INTO response (content, request_id) VALUES (?, ?)",
@@ -179,7 +179,7 @@ impl DB {
 #[async_trait::async_trait]
 pub trait RequestStorage {
     async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64>;
-    async fn store_response(&mut self, req: &ResponseData) -> anyhow::Result<()>;
+    async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()>;
 }
 
 #[async_trait::async_trait]
@@ -187,8 +187,8 @@ impl RequestStorage for DB {
     async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
         self.insert_request(req).await
     }
-    async fn store_response(&mut self, res: &ResponseData) -> anyhow::Result<()> {
-        self.insert_response(res).await
+    async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
+        self.insert_response(request_id, res).await
     }
 }
 
@@ -197,8 +197,8 @@ impl RequestStorage for Arc<DB> {
     async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
         self.insert_request(req).await
     }
-    async fn store_response(&mut self, res: &ResponseData) -> anyhow::Result<()> {
-        self.insert_response(res).await
+    async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
+        self.insert_response(request_id, res).await
     }
 }
 

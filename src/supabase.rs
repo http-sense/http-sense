@@ -46,10 +46,10 @@ impl RequestStorage for SupabaseDb {
 		})).await
 	}
 
-	async fn store_response(&mut self, res: &ResponseData) -> anyhow::Result<()> {
+	async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
 		self.insert_in_table("reseponse", &json!({
 			"content": serde_json::to_string(res)?,
-			"request_id": res.request_id
+			"request_id": request_id
 		})).await?;
 		Ok(())
 	}
@@ -65,7 +65,8 @@ async fn my_test() {
 		headers: Default::default(),
 		uri: "/hello".parse().unwrap(),
 		method: http::Method::GET,
-		body: Bytes::from_static(b"Just checking")
+		body: Bytes::from_static(b"Just checking"),
+		createdAt: chrono::Utc::now()
 	}).await;
 	dbg!(r);
 

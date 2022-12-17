@@ -1,4 +1,4 @@
-use crate::{config::get_database_file, db::{DB, RequestStorage}, model::{RequestData, ResponseData}};
+use crate::{config::get_database_file, db::{DB, RequestStorage}, model::{RequestData, ResponseData, ResponseError}};
 use anyhow::Context;
 use axum::{
     body::{Body, Bytes},
@@ -14,81 +14,45 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, fmt::Debug};
 
 trait MyTrait: RequestStorage + std::fmt::Debug {}
+type RequestId = uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub enum ProxyEvent {
+    // TODO: move RequestId out
+    RequestRecv(RequestId, RequestData),
+    ResponseRecv(RequestId, ResponseData),
+    RequestError(RequestId, ResponseError)
+}
+
+impl From<(RequestId, RequestData)> for ProxyEvent {
+    fn from(value: (RequestId, RequestData)) -> Self {
+        ProxyEvent::RequestRecv(value.0, value.1)
+    }
+}
+
+impl From<(RequestId, ResponseData)> for ProxyEvent {
+    fn from(value: (RequestId, ResponseData)) -> Self {
+        ProxyEvent::ResponseRecv(value.0, value.1)
+    }
+}
+
+#[derive(Debug, Clone)]
 struct AppState {
     // db: [Box<dyn MyTrait>; 5],
-    db: (Box<dyn MyTrait>, Box<dyn MyTrait>, Box<dyn MyTrait>, Box<dyn MyTrait>, Box<dyn MyTrait>),
+    event_tx: tokio::sync::broadcast::Sender<ProxyEvent>,
     origin: url::Url
 }
 
-
-struct ResponseWriter<'a> {
-    app_state: &'a mut AppState,
-    ids: Vec<u64>
-}
-#[derive(Debug)]
-struct NoOpWriter { }
-#[async_trait::async_trait]
-impl RequestStorage for NoOpWriter {
-    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
-        Ok(0)
-    }
-    async fn store_response(&mut self, req: &ResponseData) -> anyhow::Result<()> {
-        Ok(())
-    }
-}
-
-// impl MyTrait for NoOpWriter {}
-
 impl<T: Debug + RequestStorage> MyTrait for T { }
-impl AppState {
-
-    fn new(mut dbs: Vec<Box<dyn MyTrait>>, origin: url::Url) -> Self {
-        assert!(dbs.len() <= 5, "Max 5 request storages support atm");
-        while (dbs.len() < 5) {
-            dbs.push(Box::new(NoOpWriter{}));
-        }
-
-        AppState { db: (dbs[0], dbs[1], dbs[2], dbs[3], dbs[4]), origin }
-    }
-
-    async fn write_request<'a>(&'a mut self, req: &RequestData) -> anyhow::Result<ResponseWriter<'a>> {
-        let res = futures::future::join5(
-            self.db.0.store_request(req),
-            self.db.1.store_request(req),
-            self.db.2.store_request(req),
-            self.db.3.store_request(req),
-            self.db.4.store_request(req),
-        ).await;
-        let res = vec![
-            res.0?,
-            res.1?,
-            res.2?,
-            res.3?,
-            res.4?,
-        ];
-        Ok(ResponseWriter {
-            app_state: self,
-            ids: res
-
-        })
-        // let rs = futures::future::join_all(tasks).await;
-        // let b: anyhow::Result<Vec<u64>> = rs.into_iter().map(|x| {
-        //     x?
-        // }).collect();
-        // let b = b?;
-
-        // todo!()
-        // a.store_request(req).await;
-    }
-}
 
 
-pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str, origin: &str) -> anyhow::Result<()> {
+pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_port: u16, proxy_addr: &str, origin: &str) -> anyhow::Result<()> {
     let origin = url::Url::parse(origin)?;
-    // let app_state = AppState { db: vec![db], origin};
-    let app_state = Arc::new(AppState::new(vec![Box::new(db)], origin));
+    // let (tx, mut rx) = tokio::sync::broadcast::channel(128);
+    let app_state = AppState {
+        event_tx: tx,
+        origin,
+    };
 
     let app = Router::new()
         .route("/*path", any(root))
@@ -117,15 +81,14 @@ async fn handle_incoming_request(
     let mut body = request.into_body();
     let data = hyper::body::to_bytes(body).await?;
     let uuid = uuid::Uuid::new_v4();
-    let request_id = state
-        .db
-        .store_request(&RequestData {
+    state
+        .event_tx.send((uuid, RequestData {
             uri,
             headers,
             method,
-            body: data // TODO
-        })
-        .await?;
+            body: data, // TODO
+            createdAt: chrono::Utc::now()
+        }).into())?;
     
     let response = reqwest::get(state.origin).await?;
     let response_builder = http::Response::builder();
@@ -143,9 +106,10 @@ async fn handle_incoming_request(
         body: response_bytes,
         headers: response_headers,
         status_code: response_status,
-        request_id,
+        createdAt: chrono::Utc::now()
     };
-    state.db.store_response(&response_data).await?;
+    state.event_tx.send((uuid, response_data).into())?;
+    // state.db.store_response(&response_data).await?;
 
     return Ok(res);
 
@@ -157,7 +121,7 @@ async fn handle_incoming_request(
 // TODO:  Error handling -- Any T that implements From<T> for StatusCode should not able handled by INTERNAL SERVER ERROR
 
 // basic handler that responds with a static string
-// #[axum_macros::debug_handler]
+#[axum_macros::debug_handler]
 async fn root(
     State(state): State<AppState>,
     request: Request<Body>,
