@@ -1,5 +1,17 @@
-- [ ] Store request bytes
-- [ ] Maybe use hyper for more low-level http proxy
+- [x] Add svelte static server
+- [ ] Add timestamp to requests
+- [ ] Handle request timeout
+    - [ ] And maybe other errors too
+- [ ] Improve Command line args
+    - Also take port ranges
+        - Pick first available if first is busy
+    - Multiple formats for url
+        - port only -> localhost:port
+        - no schema -> http:domain
+        - schema -> verify http or https
+- [ ] Convert bytes to utf-8
+- [ ] Improve logging
+- [ ] Add a way to publish the content
 
 
 - What is interesting for user:

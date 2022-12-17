@@ -24,6 +24,10 @@ uuid = { version = "1.2.2", features = ["v4", "fast-rng", "serde"] }
 clap = { version = "4.0.29", features = ["derive"] }
 reqwest = "0.11.13"
 url = "2.3.1"
+include_dir = "0.7.3"
+infer = "0.11.0"
+mime = "0.3.16"
+mime_guess = "2.0.4"
 
 [dev-dependencies]
 tempfile = "3.3.0"
