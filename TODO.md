@@ -1,7 +1,7 @@
 - [x] Add timestamp to requests
 - [x] Convert bytes to utf-8
 - [ ] Add a way to publish the content
-    - [ ] Use supabase postgrest-rs
+    - [x] Use supabase postgrest-rs
 - [ ] Improve logging
 - [ ] Handle request timeout
     - [ ] And maybe other errors too
