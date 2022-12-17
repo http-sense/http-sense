@@ -661,6 +661,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "go_true"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e871ae708acbfbb22f89128cfc5a06394eda26078d3b58d6eae2a692458a581"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -771,6 +782,7 @@ dependencies = [
  "clap",
  "directories",
  "futures",
+ "go_true",
  "http",
  "http-serde",
  "hyper",
@@ -779,6 +791,7 @@ dependencies = [
  "mime",
  "mime_guess",
  "postgrest",
+ "rand",
  "reqwest",
  "rust_socketio",
  "serde",

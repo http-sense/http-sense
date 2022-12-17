@@ -7,21 +7,27 @@ mod db;
 mod model;
 mod proxy_server;
 mod ui_server;
+mod supabase_auth;
 use anyhow::Context;
 use clap::Parser;
 use db::RequestStorage;
 use futures::never::Never;
 use proxy_server::ProxyEvent;
 
-use crate::{config::get_database_file, db::DB};
+use crate::{config::{get_database_file, SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY}, db::DB, supabase::SupabaseDb, supabase_auth::create_user};
 
-use std::{sync::Arc, collections::HashMap};
+use std::{sync::Arc, collections::HashMap, pin::Pin};
 
 #[async_trait::async_trait(?Send)]
 trait EventConsumer {
     async fn consume(&mut self, mut rx: tokio::sync::broadcast::Receiver<ProxyEvent>) -> anyhow::Result<()>;
 }
 
+async fn infinite_sleep() -> anyhow::Result<()> {
+    loop {
+        tokio::time::sleep(tokio::time::Duration::from_secs_f64(100000.)).await;
+    }
+}
 
 #[async_trait::async_trait(?Send)]
 impl<T: RequestStorage> EventConsumer for T {
@@ -59,8 +65,25 @@ async fn main() -> anyhow::Result<()> {
     let proxy_db = shared_db.clone();
     let ui_db = shared_db.clone();
     let args = cli::CLIArgs::parse();
-
     let (tx, mut rx) = tokio::sync::broadcast::channel(128);
+    let mut rx2 = tx.subscribe();
+    let mut supabase_db = None;
+    if (args.publish) {
+        let user = create_user().await?;
+        dbg!(&user.email, &user.password);
+        let sup_db = SupabaseDb::new(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY, user);
+        supabase_db = Some(sup_db);
+    }
+
+    let publish_future = if let Some(sup_db)  = supabase_db.as_mut() {
+        // let mut sup_db = SupabaseDb::new(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY, create_user().await?);
+        // supabase_db = Some(sup_db);
+        sup_db.consume(rx2)
+        // supabase_db.map(|mut x| x.consume(rx2)).unwrap()
+    } else {
+        Box::pin(infinite_sleep())
+    };
+
     tokio::select! {
         v = proxy_server::start_server(tx, args.proxy_port, &args.proxy_addr, &args.origin_url) => {
             tracing::error!("Proxy server has stopped");
@@ -70,8 +93,11 @@ async fn main() -> anyhow::Result<()> {
             tracing::error!("UI server has stopped");
             j?;
         }
-        _ = shared_db.consume(rx) => {
-            tracing::error!("DB Consumer has stopped");
+        e = shared_db.consume(rx) => {
+            tracing::error!("DB Consumer has stopped {:?}", e);
+        }
+        r = publish_future => {
+            tracing::error!("Publishing stopped {:?}", r);
         }
     };
 

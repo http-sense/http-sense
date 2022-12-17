@@ -8,11 +8,15 @@ type Addr = String;
 pub struct CLIArgs {
    pub origin_url: String,
 
+   #[arg(long, default_value_t=false)]
+   pub publish: bool,
+
    #[arg(short='p', long, default_value_t=6100)]
    pub proxy_port: Port,
 
    #[arg(short='a', long, default_value_t={"127.0.0.1".to_string()})]
    pub proxy_addr: Addr,
+
 
    #[arg(long, default_value_t=6101)]
    pub ui_port: Port,

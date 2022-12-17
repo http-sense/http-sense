@@ -2,7 +2,8 @@
 - [x] Convert bytes to utf-8
 - [x] Multiple consumer using tokio::sync::broadcast
 - [ ] Add a way to publish the content
-    - [ ] Define user rbac flow
+    - [x] Define user rbac flow
+        - Create new email/password user everytime
     - [x] Use supabase postgrest-rs
 - [ ] Convert body to string
 - [ ] Handle request timeout
