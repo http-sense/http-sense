@@ -1,5 +1,6 @@
-- [x] Add svelte static server
-- [ ] Add timestamp to requests
+- [x] Add timestamp to requests
+- [ ] Convert bytes to utf-8
+- [ ] Add a way to publish the content
 - [ ] Handle request timeout
     - [ ] And maybe other errors too
 - [ ] Improve Command line args
@@ -9,7 +10,6 @@
         - port only -> localhost:port
         - no schema -> http:domain
         - schema -> verify http or https
-- [ ] Convert bytes to utf-8
 - [ ] Improve logging
 - [ ] Add a way to publish the content
 

@@ -1,155 +1,177 @@
+use std::str::FromStr;
 
+use crate::model::RequestData;
+use crate::model::ResponseData;
+use anyhow::Context;
+use serde::Deserialize;
 use serde::Serialize;
-use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteConnection;
 use sqlx::sqlite::SqliteExecutor;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::Connection;
-use crate::model::RequestData;
-use crate::model::ResponseData;
+use sqlx::SqlitePool;
 
 #[derive(Debug, Clone)]
 pub struct DB {
     pool: SqlitePool,
 }
 
-struct DBRow {
-    uuid: String,
-    content: String
+#[derive(Clone, Debug)]
+struct DBRequest {
+    request_id: i64,
+
+    request_ts: String,
+    request_content: String,
+
+    response_ts: Option<String>,
+    response_content: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ReqRes {
+    pub request_id: i64,
+
+    pub request: (chrono::DateTime<chrono::Utc>, RequestData),
+
+    pub response: Option<(chrono::DateTime<chrono::Utc>, ResponseData)>,
 }
 
 
-impl TryFrom<DBRow> for RequestData {
+fn str_to_chrono(value: &str) -> anyhow::Result<chrono::DateTime<chrono::Utc>> {
+    // 2
+    let value = format!("{}+00:00", value);
+    chrono::DateTime::from_str(&value).ok().context("Can't parse chrono date")
+}
+
+impl TryFrom<DBRequest> for ReqRes {
     type Error = anyhow::Error;
-    fn try_from(value: DBRow) -> anyhow::Result<Self> {
-        let result: Self = serde_json::from_str(&value.content)?;
-        Ok(result)
-        // value.content.into
-        // Ok(Self {
-        //     uuid: value.uuid.parse()?
-        // })
+    fn try_from(value: DBRequest) -> anyhow::Result<Self> {
+        let request_time = str_to_chrono(&value.request_ts)?;
+        let mut response: Option<(chrono::DateTime<chrono::Utc>, ResponseData)> = None;
+        if let Some(res_ts) = value.response_ts {
+            response = Some((
+                str_to_chrono(&res_ts)?,
+                serde_json::from_str(
+                    &value
+                        .response_content
+                        .context("response body is invalid or missing")?,
+                )?,
+            ))
+        }
+        Ok(ReqRes {
+            request_id: value.request_id,
+            request: (request_time, serde_json::from_str(&value.request_content)?),
+            response,
+        })
     }
 }
 
-impl TryFrom<DBRow> for ResponseData {
+impl TryFrom<DBRequest> for RequestData {
     type Error = anyhow::Error;
-    fn try_from(value: DBRow) -> anyhow::Result<Self> {
-        let result: Self = serde_json::from_str(&value.content)?;
+    fn try_from(value: DBRequest) -> anyhow::Result<Self> {
+        let result: Self = serde_json::from_str(&value.request_content)?;
+        Ok(result)
+    }
+}
+
+impl TryFrom<DBRequest> for ResponseData {
+    type Error = anyhow::Error;
+    fn try_from(value: DBRequest) -> anyhow::Result<Self> {
+        let result: Self = serde_json::from_str(
+            &value
+                .response_content
+                .context("request does not have a response")?,
+        )?;
         Ok(result)
     }
 }
 
 impl DB {
     pub async fn connect(db_file: &str) -> anyhow::Result<Self> {
-        let mut db = Self {
-            pool: SqlitePoolOptions::new().max_connections(3).connect(db_file).await?,
+        let db = Self {
+            pool: SqlitePoolOptions::new()
+                .max_connections(3)
+                .connect(db_file)
+                .await?,
         };
         db.bootstrap().await?;
         Ok(db)
     }
 
     async fn bootstrap(&self) -> anyhow::Result<()> {
-        sqlx::query!(
-            "
-                CREATE TABLE IF NOT EXISTS request (
-                    id INTEGER PRIMARY KEY,
-                    uuid TEXT NOT NULL,
-                    content TEXT NOT NULL
-                )
-            "
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let query: &'static str = include_str!("../sqls/init.sql");
+        sqlx::query(query).fetch_all(&self.pool).await?;
 
-        sqlx::query!(
-            "
-                CREATE TABLE IF NOT EXISTS response (
-                    id INTEGER PRIMARY KEY,
-                    uuid TEXT NOT NULL,
-                    content TEXT NOT NULL
-                )
-            "
-        )
-        .fetch_all(&self.pool)
-        .await?;
         Ok(())
     }
 
-    pub async fn insert_request(&self, req: &RequestData) -> anyhow::Result<()> {
-        // tracing::info!("Inserting in db");
-        // let uri = req.uri.to_string();
-        // let serializer = serde::Serializer
-
-        // // Headers
-        // let mut writer = Vec::with_capacity(128);
-        // let mut ser = serde_json::Serializer::new(writer);
-        // let r = http_serde::header_map::serialize(&req.headers, &mut ser);
-        // let header_serialized = unsafe {
-        //     // We do not emit invalid UTF-8.
-        //     String::from_utf8_unchecked(writer)
-        // };
-
-        // // Method
-        // let mut writer = Vec::with_capacity(128);
-        // let mut ser = serde_json::Serializer::new(writer);
-        // http_serde::method::serialize(&req.method, &mut ser)?;
-        // let method_serialized = unsafe {
-        //     // We do not emit invalid UTF-8.
-        //     String::from_utf8_unchecked(writer)
-        // };
-
-        // UUid
-        // let mut writer = Vec::with_capacity(128);
-        // let mut ser = serde_json::Serializer::new(&mut writer);
-        // req.uuid.serialize(&mut ser)?;
-        // // http_serde::method::serialize(&req.uuid, &mut ser)?;
-        // let uuid_ser = unsafe {
-        //     // We do not emit invalid UTF-8.
-        //     String::from_utf8_unchecked(writer)
-        // };
-
+    pub async fn insert_request(&self, req: &RequestData) -> anyhow::Result<u64> {
         // Method
-        let uuid_ser = serde_json::to_string(&req.uuid)?;
         let content = serde_json::to_string(req)?;
-        dbg!(&uuid_ser, &content);
-
+        dbg!(&content);
 
         // http_serde::header_map::serialize(&req.headers, ser)
-        sqlx::query!("INSERT INTO request (uuid, content) VALUES (?, ?)", uuid_ser, content)
+        let r = sqlx::query!("INSERT INTO request (content) VALUES (?)", content)
             .fetch_all(&self.pool)
             .await?;
-        Ok(())
+
+        Ok(1)
     }
 
     pub async fn insert_response(&self, res: &ResponseData) -> anyhow::Result<()> {
         // Method
-        let uuid_ser = serde_json::to_string(&res.uuid)?;
         let content = serde_json::to_string(res)?;
-        dbg!(&uuid_ser, &content);
 
+        let req_id = res.request_id as i64;
         // http_serde::header_map::serialize(&req.headers, ser)
-        sqlx::query!("INSERT INTO response (uuid, content) VALUES (?, ?)", uuid_ser, content)
-            .fetch_all(&self.pool)
-            .await?;
+        sqlx::query!(
+            "INSERT INTO response (content, request_id) VALUES (?, ?)",
+            content,
+            req_id
+        )
+        .fetch_all(&self.pool)
+        .await?;
         Ok(())
     }
 
-    pub async fn get_recent_requests(&self) -> anyhow::Result<Vec<RequestData>> {
-        let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM request")
+    pub async fn get_recent_requests(&self) -> anyhow::Result<Vec<ReqRes>> {
+        // let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM request")
+        // // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
+        //     .fetch_all(&self.pool)
+        //     .await?;
+
+        let result = sqlx::query_as!(
+            DBRequest,
+            "
+            SELECT
+                req.id as request_id,
+                res.content as response_content,
+                res.created_at as response_ts,
+                req.content as request_content,
+                req.created_at as request_ts
+            FROM request req
+            LEFT JOIN response res
+            ON res.request_id = req.id;
+        "
+        )
         // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
-            .fetch_all(&self.pool)
-            .await?;
-        Ok(result.into_iter().map(|x| RequestData::try_from(x)).collect::<anyhow::Result<Vec<_>>>()?)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(result
+            .into_iter()
+            .map(|x| ReqRes::try_from(x))
+            .collect::<anyhow::Result<Vec<_>>>()?)
+
     }
 
-    pub async fn get_recent_responses(&self) -> anyhow::Result<Vec<ResponseData>> {
-        let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM response")
-        // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
-            .fetch_all(&self.pool)
-            .await?;
-        Ok(result.into_iter().map(|x| ResponseData::try_from(x)).collect::<anyhow::Result<Vec<_>>>()?)
-    }
-
+    // pub async fn get_recent_responses(&self) -> anyhow::Result<Vec<ResponseData>> {
+    //     let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM response")
+    //     // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
+    //         .fetch_all(&self.pool)
+    //         .await?;
+    //     Ok(result.into_iter().map(|x| ResponseData::try_from(x)).collect::<anyhow::Result<Vec<_>>>()?)
+    // }
 }
 
 // TODO: revive

@@ -51,10 +51,9 @@ async fn handle_incoming_request(
     let mut body = request.into_body();
     let data = hyper::body::to_bytes(body).await?;
     let uuid = uuid::Uuid::new_v4();
-    state
+    let request_id = state
         .db
         .insert_request(&RequestData {
-            uuid: uuid.clone(),
             uri,
             headers,
             method,
@@ -75,10 +74,10 @@ async fn handle_incoming_request(
     let res = builder.body(body)?;
 
     let response_data = ResponseData {
-        uuid,
         body: response_bytes,
         headers: response_headers,
-        status_code: response_status
+        status_code: response_status,
+        request_id,
     };
     state.db.insert_response(&response_data).await?;
 

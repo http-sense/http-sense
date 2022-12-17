@@ -10,9 +10,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RequestData {
-    // This identifier is same for the reponse_data
-    pub uuid: uuid::Uuid,
-
     #[serde(with = "http_serde::uri")]
     pub uri: http::Uri,
 
@@ -27,8 +24,6 @@ pub struct RequestData {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ResponseData {
-    pub uuid: uuid::Uuid,
-
     #[serde(with = "http_serde::status_code")]
     pub status_code: http::StatusCode,
 
@@ -36,4 +31,6 @@ pub struct ResponseData {
     pub headers: http::HeaderMap,
 
     pub body: bytes::Bytes,
+
+    pub request_id: u64
 }
