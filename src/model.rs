@@ -25,6 +25,12 @@ pub struct RequestData {
     pub createdAt: chrono::DateTime<chrono::Utc>
 }
 
+impl RequestData {
+    pub fn utf8_body(&self) -> Option<String> {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ResponseData {
     #[serde(with = "http_serde::status_code")]
