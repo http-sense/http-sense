@@ -1,4 +1,4 @@
-use crate::{config::get_database_file, db::DB, model::{RequestData, ResponseData}};
+use crate::{config::get_database_file, db::{DB, RequestStorage}, model::{RequestData, ResponseData}};
 use anyhow::Context;
 use axum::{
     body::{Body, Bytes},
@@ -15,14 +15,23 @@ use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 
 #[derive(Debug, Clone)]
-struct AppState {
-    db: Arc<DB>,
+struct AppState<T: RequestStorage>{
+    db: T,
     origin: url::Url
 }
 
+// impl AppState<T> {
+//     async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<Vec<u64>> {
+//         let futures = self.db.iter_mut(|x| {
+//             x.store_
+//         })
+//     }
+// }
+
 pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str, origin: &str) -> anyhow::Result<()> {
     let origin = url::Url::parse(origin)?;
-    let app_state = AppState { db, origin};
+    // let app_state = AppState { db: vec![db], origin};
+    let app_state = AppState { db: db, origin};
 
     let app = Router::new()
         .route("/*path", any(root))
@@ -41,7 +50,7 @@ pub async fn start_server(db: Arc<DB>, proxy_port: u16, proxy_addr: &str, origin
 }
 
 async fn handle_incoming_request(
-    state: AppState,
+    mut state: AppState<impl RequestStorage>,
     mut request: Request<Body>,
 // ) -> anyhow::Result<impl IntoResponse> {
 ) -> anyhow::Result<http::Response<hyper::Body>> {
@@ -53,7 +62,7 @@ async fn handle_incoming_request(
     let uuid = uuid::Uuid::new_v4();
     let request_id = state
         .db
-        .insert_request(&RequestData {
+        .store_request(&RequestData {
             uri,
             headers,
             method,
@@ -79,7 +88,7 @@ async fn handle_incoming_request(
         status_code: response_status,
         request_id,
     };
-    state.db.insert_response(&response_data).await?;
+    state.db.store_response(&response_data).await?;
 
     return Ok(res);
 
@@ -91,9 +100,9 @@ async fn handle_incoming_request(
 // TODO:  Error handling -- Any T that implements From<T> for StatusCode should not able handled by INTERNAL SERVER ERROR
 
 // basic handler that responds with a static string
-#[axum_macros::debug_handler]
+// #[axum_macros::debug_handler]
 async fn root(
-    State(state): State<AppState>,
+    State(state): State<AppState<impl RequestStorage>>,
     request: Request<Body>,
 ) -> Result<Response<hyper::Body>, StatusCode> {
     handle_incoming_request(state, request)

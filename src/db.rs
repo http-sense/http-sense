@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::sync::Arc;
 
 use crate::model::RequestData;
 use crate::model::ResponseData;
@@ -183,6 +184,16 @@ pub trait RequestStorage {
 
 #[async_trait::async_trait]
 impl RequestStorage for DB {
+    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
+        self.insert_request(req).await
+    }
+    async fn store_response(&mut self, res: &ResponseData) -> anyhow::Result<()> {
+        self.insert_response(res).await
+    }
+}
+
+#[async_trait::async_trait]
+impl RequestStorage for Arc<DB> {
     async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
         self.insert_request(req).await
     }
