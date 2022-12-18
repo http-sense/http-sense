@@ -56,6 +56,7 @@ pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_
     };
 
     let app = Router::new()
+        .route("/", any(root))
         .route("/*path", any(root))
         .with_state(app_state);
 
