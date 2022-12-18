@@ -46,12 +46,13 @@ struct AppState {
 impl<T: Debug + RequestStorage> MyTrait for T { }
 
 
-pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_port: u16, proxy_addr: &str, origin: &str) -> anyhow::Result<()> {
-    let origin = url::Url::parse(origin)?;
+pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_port: u16, proxy_addr: &str, origin: url::Url) -> anyhow::Result<()> {
+    // let origin = url::Url::parse(origin)?;
+    // let origin = url::Url::parse(origin)?;
     // let (tx, mut rx) = tokio::sync::broadcast::channel(128);
     let app_state = AppState {
         event_tx: tx,
-        origin,
+        origin: origin.clone(),
     };
 
     let app = Router::new()
@@ -59,7 +60,7 @@ pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_
         .with_state(app_state);
 
     let addr: SocketAddr = format!("{}:{}", proxy_addr, proxy_port).parse()?;
-    tracing::info!("proxy server listening on http://{}", addr);
+    tracing::info!("proxy server listening on http://{} and forwarding to {}", addr, origin.to_string());
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

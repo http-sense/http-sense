@@ -87,9 +87,11 @@ async fn main() -> anyhow::Result<()> {
         // Hack to get around 
         Box::pin(infinite_sleep())
     };
+    let origin_url = crate::cli::to_url(&args.origin_url).context(format!("Origin Url is not valid: {}", &args.origin_url))?;
+    
 
     tokio::select! {
-        v = proxy_server::start_server(tx, args.proxy_port, &args.proxy_addr, &args.origin_url) => {
+        v = proxy_server::start_server(tx, args.proxy_port, &args.proxy_addr, origin_url) => {
             tracing::error!("Proxy server has stopped");
             v?;
         }

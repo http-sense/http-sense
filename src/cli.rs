@@ -18,7 +18,12 @@ Make sense of what is coming and what is leaving your http server.
 
 {tldr_title}:
    http-sense http://localhost:8004 --publish
-   http-sense http://localhost:8004 --proxy-port 6001 --publish
+
+   # use port number as short-hand for localhost servers
+   http-sense 8004 --publish            
+
+   http-sense httpsense.com --proxy-port 6001 --publish
+
    http-sense http://localhost:8004 --proxy-port 6001 --proxy-addr 0.0.0.0
 
 ", banner=bold_style.paint(banner), tldr_title=bold_under_style.paint("TLDR"))
@@ -45,4 +50,23 @@ pub struct CLIArgs {
 
    #[arg(long, default_value_t={"127.0.0.1".to_string()}, help="Address that ui server should bind to")]
    pub ui_addr: Addr,
+}
+
+pub fn to_url(origin: &str) -> Option<url::Url> {
+   let mut origin = origin.to_string();
+    if let Ok(val) =  url::Url::parse(&origin) {
+      return Some(val);
+    };
+    if let Ok(port) = origin.parse::<u16>() {
+      return Some(url::Url::parse(&format!("http://localhost:{}", port)).unwrap())
+    }
+    if !origin.starts_with("http://") && !origin.starts_with("https://") {
+      origin = format!("http://{origin}");
+    }
+
+    if let Ok(val) =  url::Url::parse(&origin) {
+      return Some(val);
+    };
+
+    None
 }
