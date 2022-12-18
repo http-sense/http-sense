@@ -97,13 +97,19 @@ async fn handle_incoming_request(
         let response_headers = response.headers().clone();
         let response_status = response.status();
         for (name, value) in response.headers().iter() {
-            dbg!(name, value);
-            builder = builder.header(name, value);
+            if name != hyper::header::TRANSFER_ENCODING {
+                builder = builder.header(name, value);
+            }
         }
+        // builder = builder.header(hyper::header::TRANSFER_ENCODING, "none");
         let response_bytes = response.bytes().await?;
         let body = hyper::Body::from(response_bytes.clone());
+        // dbg!("Added body");
+        // if !builder.headers_ref().unwrap().contains_key(hyper::header::CONTENT_LENGTH) {
+        //     builder = builder.header(hyper::header::CONTENT_LENGTH, response_bytes.len());
+        // }
+
         let res = builder.body(body)?;
-        dbg!("Added body");
 
         let response_data = ResponseData {
             body: response_bytes,
