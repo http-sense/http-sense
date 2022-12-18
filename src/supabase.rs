@@ -48,16 +48,18 @@ impl SupabaseDb {
 impl RequestStorage for SupabaseDb {
 	async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
 		self.insert_in_table("request", &json!({
-			"content": serde_json::to_string(req)?,
-			"user_id": self.user.uid()
+			"content": req.serialize_response(),
+			"user_id": self.user.uid(),
+			"created_at": req.createdAt.to_rfc3339()
 		})).await
 	}
 
 	async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
 		self.insert_in_table("response", &json!({
-			"content": serde_json::to_string(res)?,
+			"content": res.serialize_response(),
 			"request_id": request_id,
-			"user_id": self.user.uid()
+			"user_id": self.user.uid(),
+			"created_at": res.createdAt.to_rfc3339()
 		})).await?;
 		Ok(())
 	}
