@@ -1,0 +1,28 @@
+- [x] Add timestamp to requests
+- [x] Convert bytes to utf-8
+- [x] Multiple consumer using tokio::sync::broadcast
+- [x] Add a way to publish the content
+    - [x] Define user rbac flow
+        - Create new email/password user everytime
+    - [x] Use supabase postgrest-rs
+- [ ] Convert body to string
+- [ ] Handle request timeout
+    - [ ] And maybe other errors too
+- [ ] Improve logging
+- [ ] Temporary file for local sqlite
+- [ ] Improve Command line args
+    - Also take port ranges
+        - Pick first available if first is busy
+    - Multiple formats for url
+        - port only -> localhost:port
+        - no schema -> http:domain
+        - schema -> verify http or https
+
+- [ ] Socks5 Proxy integration
+
+- What is interesting for user:
+    - The request sent by client to proxy_server
+    - The response sent by server to proxy
+    - What is not interesting, althought these will be mostly same
+        - Request sent by proxy to server
+        - Response sent by proxy to client
