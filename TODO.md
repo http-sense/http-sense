@@ -9,7 +9,7 @@
 - [x] Handle request timeout
     - [x] And maybe other errors too
 - [ ] Improve logging
-- [ ] Temporary file for local sqlite
+- [x] Temporary file for local sqlite
 - [ ] Improve Command line args
     - Also take port ranges
         - Pick first available if first is busy

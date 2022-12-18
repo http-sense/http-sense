@@ -40,7 +40,7 @@ pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str) -> anyhow::R
         .with_state(app_state);
 
     let addr: SocketAddr = format!("{}:{}", ui_addr, ui_port).parse()?;
-    tracing::info!("ui server listening on {}", addr);
+    tracing::info!("ui server listening on http://{}", addr);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -69,16 +69,13 @@ async fn handle_incoming_request(
     state: AppState,
     request: Request<Body>,
 ) -> anyhow::Result<impl IntoResponse> {
-    dbg!("Getting requests");
     let rows = state.db.get_recent_requests().await?;
-    dbg!("Got requests");
     let rows = rows
         .into_iter()
         .map(|x| {
             x.to_json_value()
         })
         .collect::<Vec<_>>();
-    dbg!(&rows);
 
     return Ok(Json(serde_json::json!(rows)));
 }
@@ -130,17 +127,14 @@ async fn _get_frontend(
         b = &b[1..];
     }
 
-    dbg!(b);
     if (PROJECT_DIR.get_file(b).is_none()) {
         b = b_html.as_str();
-        dbg!(b);
     }
     while (b.starts_with("/")) {
         b = &b[1..];
     }
     if (PROJECT_DIR.get_file(b).is_none()) {
         b = b_dir_html.as_str();
-        dbg!(b);
     }
     while (b.starts_with("/")) {
         b = &b[1..];

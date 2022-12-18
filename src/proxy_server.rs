@@ -59,7 +59,7 @@ pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_
         .with_state(app_state);
 
     let addr: SocketAddr = format!("{}:{}", proxy_addr, proxy_port).parse()?;
-    tracing::info!("proxy server listening on {}", addr);
+    tracing::info!("proxy server listening on http://{}", addr);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -123,7 +123,6 @@ async fn handle_incoming_request(
     match make_request().await {
         Ok((response_data, res)) => {
             state.event_tx.send((uuid, response_data).into())?;
-            dbg!(&res);
             Ok(res)
         },
         Err(e) => {

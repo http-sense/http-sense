@@ -8,6 +8,7 @@ use anyhow::Context;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::sqlite::SqliteConnection;
+use sqlx::pool::PoolOptions;
 use sqlx::sqlite::SqliteExecutor;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::Connection;
@@ -110,7 +111,6 @@ impl DB {
     pub async fn insert_request(&self, req: &RequestData) -> anyhow::Result<u64> {
         // Method
         let content = serde_json::to_string(req)?;
-        dbg!(&content);
 
         // http_serde::header_map::serialize(&req.headers, ser)
         let r = sqlx::query!("INSERT INTO request (content) VALUES (?)", content)

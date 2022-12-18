@@ -61,6 +61,7 @@ impl<T: RequestStorage> EventConsumer for T {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
+    log::set_max_level(log::LevelFilter::Off);
 
     let mut db = DB::connect(&get_database_file()?).await?;
     let mut shared_db = Arc::new(db);
