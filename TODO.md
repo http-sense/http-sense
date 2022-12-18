@@ -5,9 +5,9 @@
     - [x] Define user rbac flow
         - Create new email/password user everytime
     - [x] Use supabase postgrest-rs
-- [ ] Convert body to string
-- [ ] Handle request timeout
-    - [ ] And maybe other errors too
+- [x] Convert body to string
+- [x] Handle request timeout
+    - [x] And maybe other errors too
 - [ ] Improve logging
 - [ ] Temporary file for local sqlite
 - [ ] Improve Command line args

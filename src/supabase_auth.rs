@@ -29,7 +29,7 @@ macro_rules! to_session {
 	};
 }
 
-fn get_random_string(len: usize) -> String {
+pub fn get_random_string(len: usize) -> String {
     let rand_string: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(len)

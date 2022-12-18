@@ -94,5 +94,11 @@ impl ResponseData {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ResponseError {
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub createdAt: chrono::DateTime<chrono::Utc>
+    pub createdAt: chrono::DateTime<chrono::Utc>,
+    pub error: String
+}
+impl ResponseError {
+    pub fn serialize_response(&self) -> serde_json::Value {
+        json!(self)
+    }
 }

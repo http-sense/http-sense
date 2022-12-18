@@ -1,4 +1,4 @@
-#![feature(file_create_new)]
+#![feature(file_create_new, async_closure)]
 mod cli;
 mod config;
 mod supabase;
@@ -50,7 +50,8 @@ impl<T: RequestStorage> EventConsumer for T {
                 },
                 ProxyEvent::RequestError(rid, error) => {
                     let store_id = requests.remove(&rid).context("Got Error without request")?;
-                    unimplemented!()
+                    tracing::error!("Couldn't finish the request. Error: {:?}", &error);
+                    self.store_error(store_id, &error).await?;
                 }
             }
         }
@@ -76,16 +77,13 @@ async fn main() -> anyhow::Result<()> {
 
         let sup_db = SupabaseDb::new(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY, user);
         supabase_db = Some(sup_db);
-
         info!("Request logs published at: {}", url.to_string());
     }
 
     let publish_future = if let Some(sup_db)  = supabase_db.as_mut() {
-        // let mut sup_db = SupabaseDb::new(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY, create_user().await?);
-        // supabase_db = Some(sup_db);
         sup_db.consume(rx2, "supabase_db")
-        // supabase_db.map(|mut x| x.consume(rx2)).unwrap()
     } else {
+        // Hack to get around 
         Box::pin(infinite_sleep())
     };
 

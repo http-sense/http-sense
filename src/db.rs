@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use crate::model::RequestData;
 use crate::model::ResponseData;
+use crate::model::ResponseError;
 use anyhow::Context;
 use serde::Deserialize;
 use serde::Serialize;
@@ -135,6 +136,22 @@ impl DB {
         Ok(())
     }
 
+    pub async fn insert_error(&self, request_id: u64, res: &ResponseError) -> anyhow::Result<()> {
+        // Method
+        let content = serde_json::to_string(res)?;
+
+        let req_id = request_id as i64;
+        // http_serde::header_map::serialize(&req.headers, ser)
+        sqlx::query!(
+            "INSERT INTO response (content, request_id) VALUES (?, ?)",
+            content,
+            req_id
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     pub async fn get_recent_requests(&self) -> anyhow::Result<Vec<ReqRes>> {
         // let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM request")
         // // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
@@ -180,6 +197,7 @@ impl DB {
 pub trait RequestStorage {
     async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64>;
     async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()>;
+    async fn store_error(&mut self, request_id: u64, res: &ResponseError) -> anyhow::Result<()>;
 }
 
 #[async_trait::async_trait]
@@ -190,6 +208,9 @@ impl RequestStorage for DB {
     async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
         self.insert_response(request_id, res).await
     }
+    async fn store_error(&mut self, request_id: u64, res: &ResponseError) -> anyhow::Result<()> {
+        self.insert_error(request_id, res).await
+    }
 }
 
 #[async_trait::async_trait]
@@ -199,6 +220,9 @@ impl RequestStorage for Arc<DB> {
     }
     async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
         self.insert_response(request_id, res).await
+    }
+    async fn store_error(&mut self, request_id: u64, res: &ResponseError) -> anyhow::Result<()> {
+        self.insert_error(request_id, res).await
     }
 }
 
