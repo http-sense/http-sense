@@ -9,6 +9,7 @@
 - [ ] Handle request timeout
     - [ ] And maybe other errors too
 - [ ] Improve logging
+- [ ] Temporary file for local sqlite
 - [ ] Improve Command line args
     - Also take port ranges
         - Pick first available if first is busy
@@ -17,6 +18,7 @@
         - no schema -> http:domain
         - schema -> verify http or https
 
+- [ ] Socks5 Proxy integration
 
 - What is interesting for user:
     - The request sent by client to proxy_server
