@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
-use crate::{db::RequestStorage, model::{RequestData, ResponseData, ResponseError}, supabase_auth::{AuthenticatedUser, create_user}, config::{SUPABASE_ANON_KEY, SUPABASE_PROJECT_URL}};
+use crate::{db::RequestStorage, model::{RequestData, ResponseData, ResponseError}, supabase_auth::{AuthenticatedUser}};
 use anyhow::Context;
-use bytes::Bytes;
+
 use postgrest::Postgrest;
 use serde_json::json;
 
@@ -31,7 +31,7 @@ impl SupabaseDb {
 			serde_json::to_string(content)?
 		).execute().await?;
 
-		if (!r.status().is_success()) {
+		if !r.status().is_success() {
 			let r_str = format!("{:?}", &r);
 			anyhow::bail!("bad response from supabase {}\n Text {}", r_str,  &r.text().await?)
 		}

@@ -1,26 +1,24 @@
-use bytes::Buf;
+
 use include_dir::{include_dir, Dir};
-use serde_json::json;
-use std::{borrow::Borrow, path::Path};
+
+
 
 use crate::{
-    config::get_database_file,
     db::{DB, ReqRes},
-    model::{RequestData, ResponseData},
 };
-use anyhow::Context;
+
 use axum::{
     body::{Body, Bytes},
-    extract::{Query, State},
+    extract::{State},
     http::StatusCode,
-    http::{header::HeaderMap, Request},
-    response::{Html, IntoResponse},
-    routing::{any, get, post},
+    http::{Request},
+    response::{IntoResponse},
+    routing::{get},
     Json, Router,
 };
 
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+
+use std::{net::SocketAddr, sync::Arc};
 
 #[derive(Debug, Clone)]
 struct AppState {
@@ -67,7 +65,7 @@ impl ReqRes {
 
 async fn handle_incoming_request(
     state: AppState,
-    request: Request<Body>,
+    _request: Request<Body>,
 ) -> anyhow::Result<impl IntoResponse> {
     let rows = state.db.get_recent_requests().await?;
     let rows = rows
@@ -94,8 +92,8 @@ async fn get_requests(
 }
 
 async fn handle_incoming_req2(
-    state: AppState,
-    request: Request<Body>,
+    _state: AppState,
+    _request: Request<Body>,
 ) -> anyhow::Result<axum::response::Response> {
     // let rows = state.db.get_recent_requests().await?;
     // return Ok(Json(rows));
@@ -114,7 +112,7 @@ async fn get_responses(
 }
 
 async fn _get_frontend(
-    state: AppState,
+    _state: AppState,
     request: Request<Body>,
 ) -> anyhow::Result<axum::response::Response> {
     let file_path = request.uri().to_string();
@@ -123,20 +121,20 @@ async fn _get_frontend(
     let b_html = format!("{}.html", b_orig);
     let b_dir_html = format!("{}/index.html", b_orig);
 
-    while (b.starts_with("/")) {
+    while b.starts_with("/") {
         b = &b[1..];
     }
 
-    if (PROJECT_DIR.get_file(b).is_none()) {
+    if PROJECT_DIR.get_file(b).is_none() {
         b = b_html.as_str();
     }
-    while (b.starts_with("/")) {
+    while b.starts_with("/") {
         b = &b[1..];
     }
-    if (PROJECT_DIR.get_file(b).is_none()) {
+    if PROJECT_DIR.get_file(b).is_none() {
         b = b_dir_html.as_str();
     }
-    while (b.starts_with("/")) {
+    while b.starts_with("/") {
         b = &b[1..];
     }
 

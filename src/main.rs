@@ -11,13 +11,13 @@ mod supabase_auth;
 use anyhow::Context;
 use clap::Parser;
 use db::RequestStorage;
-use futures::never::Never;
+
 use proxy_server::ProxyEvent;
 use tracing::info;
 
 use crate::{config::{get_database_file, SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY}, db::DB, supabase::SupabaseDb, supabase_auth::create_user};
 
-use std::{sync::Arc, collections::HashMap, pin::Pin};
+use std::{sync::Arc, collections::HashMap};
 
 #[async_trait::async_trait(?Send)]
 trait EventConsumer {
@@ -63,15 +63,15 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     log::set_max_level(log::LevelFilter::Off);
 
-    let mut db = DB::connect(&get_database_file()?).await?;
+    let db = DB::connect(&get_database_file()?).await?;
     let mut shared_db = Arc::new(db);
-    let proxy_db = shared_db.clone();
+    let _proxy_db = shared_db.clone();
     let ui_db = shared_db.clone();
     let args = cli::CLIArgs::parse();
-    let (tx, mut rx) = tokio::sync::broadcast::channel(128);
-    let mut rx2 = tx.subscribe();
+    let (tx, rx) = tokio::sync::broadcast::channel(128);
+    let rx2 = tx.subscribe();
     let mut supabase_db = None;
-    if (args.publish) {
+    if args.publish {
         let user = create_user().await?;
         let ticket = base64::encode(format!("{}::{}", &user.email, &user.password));
         let url = url::Url::parse_with_params("https://nkit.dev/zoo", &[("ticket", ticket)]).unwrap();

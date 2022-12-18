@@ -1,5 +1,5 @@
-use std::{collections::HashMap, str::Bytes, borrow::Borrow};
-use serde_json:: {json, Value};
+use std::{borrow::Borrow};
+use serde_json:: {json};
 
 use serde::{Deserialize, Serialize};
 
@@ -43,7 +43,7 @@ impl RequestData {
     }
     pub fn serialize_response(&self) -> serde_json::Value {
         let mut request_value = self.serialize_without_body();
-        let mut content = request_value.as_object_mut().unwrap();
+        let content = request_value.as_object_mut().unwrap();
         content.insert("body".to_string(), json!(self.utf8_body().ok()));
         content.insert("body_size".to_string(), json!(self.body_size()));
         request_value
@@ -84,7 +84,7 @@ impl ResponseData {
 
     pub fn serialize_response(&self) -> serde_json::Value {
         let mut request_value = self.serialize_without_body();
-        let mut content = request_value.as_object_mut().unwrap();
+        let content = request_value.as_object_mut().unwrap();
         content.insert("body".to_string(), json!(self.utf8_body().ok()));
         content.insert("body_size".to_string(), json!(self.body_size()));
         request_value

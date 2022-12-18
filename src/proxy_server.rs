@@ -1,17 +1,16 @@
-use crate::{config::get_database_file, db::{DB, RequestStorage}, model::{RequestData, ResponseData, ResponseError}};
-use anyhow::Context;
+use crate::{db::{RequestStorage}, model::{RequestData, ResponseData, ResponseError}};
+
 use axum::{
-    body::{Body, Bytes},
-    extract::{Query, State},
+    body::{Body},
+    extract::{State},
     http::StatusCode,
-    http::{header::HeaderMap, Request},
-    response::{IntoResponse, Response},
-    routing::{any, get, post},
-    Json, Router,
+    http::{Request},
+    response::{Response},
+    routing::{any}, Router,
 };
 
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc, fmt::Debug};
+
+use std::{net::SocketAddr, fmt::Debug};
 
 trait MyTrait: RequestStorage + std::fmt::Debug {}
 type RequestId = uuid::Uuid;
@@ -73,14 +72,14 @@ pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_
 }
 
 async fn handle_incoming_request(
-    mut state: AppState,
-    mut request: Request<Body>,
+    state: AppState,
+    request: Request<Body>,
 // ) -> anyhow::Result<impl IntoResponse> {
 ) -> anyhow::Result<http::Response<hyper::Body>> {
     let uri = request.uri().clone();
     let headers = request.headers().clone();
     let method =  request.method().clone();
-    let mut body = request.into_body();
+    let body = request.into_body();
     let data = hyper::body::to_bytes(body).await?;
     let uuid = uuid::Uuid::new_v4();
     state

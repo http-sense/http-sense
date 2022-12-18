@@ -1,10 +1,10 @@
 
-use std::{fs::{self, File}, path::{Path, PathBuf}};
+use std::{fs::{self, File}, path::{PathBuf}};
 
 use anyhow::Context;
 use directories;
 
-use crate::supabase_auth::get_random_string;
+
 
 pub const SUPABASE_PROJECT_URL: &'static str = "https://wfeoffbfmtjjzamwjlob.supabase.co";
 pub const SUPABASE_ANON_KEY: &'static str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmZW9mZmJmbXRqanphbXdqbG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA4NjU3ODMsImV4cCI6MTk4NjQ0MTc4M30.6S-W8RcMx7zhIwAkuukw3kv-0zylHntZbxBopaN6C5s";

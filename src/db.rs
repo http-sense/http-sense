@@ -5,11 +5,11 @@ use crate::model::RequestData;
 use crate::model::ResponseData;
 use crate::model::ResponseError;
 use anyhow::Context;
-use serde::Deserialize;
-use serde::Serialize;
-use sqlx::sqlite::SqliteConnection;
-use sqlx::pool::PoolOptions;
-use sqlx::sqlite::SqliteExecutor;
+
+
+
+
+
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::Connection;
 use sqlx::SqlitePool;
@@ -113,7 +113,7 @@ impl DB {
         let content = serde_json::to_string(req)?;
 
         // http_serde::header_map::serialize(&req.headers, ser)
-        let r = sqlx::query!("INSERT INTO request (content) VALUES (?)", content)
+        let _r = sqlx::query!("INSERT INTO request (content) VALUES (?)", content)
             .fetch_all(&self.pool)
             .await?;
 
