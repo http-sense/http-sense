@@ -40,7 +40,7 @@ pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str) -> anyhow::R
         .with_state(app_state);
 
     let addr: SocketAddr = format!("{}:{}", ui_addr, ui_port).parse()?;
-    tracing::info!("ui server listening on http://{}", addr);
+    tracing::info!("(Feature in alpha) ui server listening on http://{}", addr);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
