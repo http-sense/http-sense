@@ -1,4 +1,5 @@
-use std::{collections::HashMap, str::Bytes};
+use std::{collections::HashMap, str::Bytes, borrow::Borrow};
+use serde_json:: {json, Value};
 
 use serde::{Deserialize, Serialize};
 
@@ -26,8 +27,26 @@ pub struct RequestData {
 }
 
 impl RequestData {
-    pub fn utf8_body(&self) -> Option<String> {
-        todo!()
+    pub fn utf8_body(&self) -> anyhow::Result<String> {
+        let x_body = self.body.clone();
+        Ok(std::str::from_utf8(x_body.borrow()).map(|x| x.to_string())?)
+    }
+
+    pub fn body_size(&self) -> usize {
+        self.body.len()
+    }
+    pub fn serialize_without_body(&self) -> serde_json::Value {
+        let mut request_value = json!(self);
+        let obj = request_value.as_object_mut().unwrap();
+        obj.remove("body").unwrap();
+        request_value
+    }
+    pub fn serialize_response(&self) -> serde_json::Value {
+        let mut request_value = self.serialize_without_body();
+        let mut content = request_value.as_object_mut().unwrap();
+        content.insert("body".to_string(), json!(self.utf8_body().ok()));
+        content.insert("body_size".to_string(), json!(self.body_size()));
+        request_value
     }
 }
 
@@ -44,6 +63,32 @@ pub struct ResponseData {
 
     #[serde(with = "chrono::serde::ts_milliseconds")]
     pub createdAt: chrono::DateTime<chrono::Utc>
+}
+
+impl ResponseData {
+    pub fn utf8_body(&self) -> anyhow::Result<String> {
+        let x_body = self.body.clone();
+        Ok(std::str::from_utf8(x_body.borrow()).map(|x| x.to_string())?)
+    }
+
+    pub fn body_size(&self) -> usize {
+        self.body.len()
+    }
+
+    pub fn serialize_without_body(&self) -> serde_json::Value {
+        let mut request_value = json!(self);
+        let obj = request_value.as_object_mut().unwrap();
+        obj.remove("body").unwrap();
+        request_value
+    }
+
+    pub fn serialize_response(&self) -> serde_json::Value {
+        let mut request_value = self.serialize_without_body();
+        let mut content = request_value.as_object_mut().unwrap();
+        content.insert("body".to_string(), json!(self.utf8_body().ok()));
+        content.insert("body_size".to_string(), json!(self.body_size()));
+        request_value
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
