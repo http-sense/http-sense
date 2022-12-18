@@ -8,14 +8,11 @@ fn main() {
     // Use the `cc` crate to build a C file and statically link it.
     //let output = if cfg!(target_os = "windows") {
 
-    Command::new("bash")
-            .args(["-C", "cd frontend && npm i && npm build"])
+    let _output = Command::new("bash")
+            .args(["-c", "cd frontend && npm i && npm run build"])
             .output()
             .expect("failed to execute process");
-    Command::new("bash")
-            .args(["-C", "sdfsdfsdf"])
-            .output()
-            .expect("failed to execute process");
+    //panic!("run? {:?}", output);
     //} else {
     //    Command::new("sh")
     //            .arg("-c")
