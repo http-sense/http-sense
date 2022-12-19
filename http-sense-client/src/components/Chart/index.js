@@ -1,4 +1,5 @@
-import { Line } from 'react-chartjs-2';
+import { useContext, useEffect, useState } from 'react';
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -7,8 +8,11 @@ import {
   LineElement,
   Title,
   Tooltip,
+  Filler,
   Legend,
 } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+import NetworkContext from '../../store/networkContext';
 
 ChartJS.register(
   CategoryScale,
@@ -17,48 +21,20 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
+  Filler,
   Legend
 );
 
-const data = {
-  labels: [
-    '0ms',
-    '100ms',
-    '200ms',
-    '300ms',
-    '400ms',
-    '500ms',
-    '600ms',
-    '700ms',
-    '800ms',
-    '900ms',
-    '1000ms',
-  ],
-  datasets: [
-    {
-      label: 'My Balance',
-      fill: false,
-      lineTension: 0.5,
-      backgroundColor: '#db86b2',
-      borderColor: '#2ed573',
-      borderCapStyle: 'butt',
-      borderDashOffset: 0.0,
-      borderJoinStyle: '#2ed573',
-      pointBorderColor: '#2ed573',
-      pointBackgroundColor: '#fff',
-      pointBorderWidth: 1,
-      pointHoverRadius: 5,
-      pointHoverBackgroundColor: '#2ed573',
-      pointHoverBorderColor: '#2ed573',
-      pointHoverBorderWidth: 2,
-      pointRadius: 1,
-      pointHitRadius: 10,
-      data: [500, 300, 400, 500, 800, 650, 700, 690, 1000, 1200, 1050, 1300],
-    },
-  ],
-};
-
 const options = {
+  responsive: true,
+  plugins: {
+    legend: {
+      position: 'top',
+    },
+    title: {
+      display: false,
+    },
+  },
   maintainAspectRatio: true,
   scales: {
     x: {
@@ -73,12 +49,50 @@ const options = {
       // beginAtZero: true, // this works
     },
   },
-  plugins: {
-    legend: {
-      display: false,
-    },
-  },
 };
 
-const Chart = () => <Line data={data} options={options} />;
+const Chart = () => {
+  const { traffic } = useContext(NetworkContext);
+
+  const requestsData = traffic.map(t => {
+    return {
+      id: t.request.id,
+      initiatedAt: t.request.createdAt,
+      timeTaken: t.response?.createdAt - t.request.createdAt,
+      path: t.request.uri,
+      verb: t.request.method,
+      status: t.response?.status_code,
+    };
+  });
+
+  const labels = requestsData.map(t => {
+    const date = new Date(t.initiatedAt);
+    return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+  });
+
+  const datasets = [
+    {
+      label: 'Response Matrix',
+      fill: true,
+      lineTension: 0.5,
+      backgroundColor: '#adefc8',
+      borderColor: '#2ed573',
+      borderCapStyle: 'butt',
+      borderDashOffset: 0.0,
+      borderJoinStyle: '#2ed573',
+      pointBorderColor: '#2ed573',
+      pointBackgroundColor: '#fff',
+      pointBorderWidth: 1,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: '#2ed573',
+      pointHoverBorderColor: '#2ed573',
+      pointHoverBorderWidth: 2,
+      pointRadius: 1,
+      pointHitRadius: 10,
+      data: requestsData.map(t => t.timeTaken),
+    },
+  ];
+
+  return <Line data={{ labels, datasets }} options={options} />;
+};
 export default Chart;
