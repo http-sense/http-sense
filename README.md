@@ -63,3 +63,9 @@ Options:
 
 
 ```
+
+# Ref
+Homepage: https://www.httpsense.com
+Crates: https://crates.io/crates/http-sense
+Git Repository: https://github.com/http-sense/http-sense
+
