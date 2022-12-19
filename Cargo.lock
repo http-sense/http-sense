@@ -786,7 +786,7 @@ checksum = "0bfe8eed0a9285ef776bb792479ea3834e8b94e13d615c2f66d03dd50a435a29"
 
 [[package]]
 name = "http-sense"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "ansi_term",
  "anyhow",

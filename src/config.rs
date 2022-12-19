@@ -39,6 +39,8 @@ pub fn get_data_dir() -> anyhow::Result<PathBuf> {
 pub fn get_database_file() -> anyhow::Result<String> {
     // tempfile::tempdir()
     // tempfile::tempfile();
+
+    use crate::supabase_auth::get_random_string;
     let data_dir = std::env::temp_dir();
     fs::create_dir_all(&data_dir)?;
 
