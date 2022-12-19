@@ -42,9 +42,6 @@ If you do not have `cargo` installed, please refer to the above section. Once yo
 ```bash
 # To get the latest and greatest version
 cargo install --git https://github.com/http-sense/http-sense
-
-# Or alternatively
-cargo install http-sense
 ```
 After installing HTTP Sense, you can run the CLI server using the commands in the next section. 
 
