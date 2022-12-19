@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   Flex,
   Heading,
@@ -29,18 +29,37 @@ const Dashboard = () => {
   const { traffic, selectedRow } = useContext(NetworkContext);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  const handleResize = () => {
+    if (window.innerWidth < 720) {
+      setIsMobile(true);
+    } else {
+      setIsMobile(false);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+  });
+
   return (
     <>
       <Flex w="85%" p="3%" flexDir="column" overflow="auto" minH="100vh">
         <Heading mb={4} fontWeight="normal">
           Network Activity
         </Heading>
-        <Heading as="h2" fontWeight="normal" size="lg" mt="2rem" mb="2rem">
-          Overview
-        </Heading>
-        <Flex w="40%">
-          <Chart />
-        </Flex>
+
+        {!isMobile && (
+          <>
+            <Heading as="h2" fontWeight="normal" size="lg" mt="2rem" mb="2rem">
+              Overview
+            </Heading>
+            <Flex w="40%">
+              <Chart />
+            </Flex>
+          </>
+        )}
 
         <Flex justifyContent="space-between" mt="5rem">
           <Flex>
