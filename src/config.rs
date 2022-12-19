@@ -61,7 +61,7 @@ pub fn get_database_file() -> anyhow::Result<String> {
         }
     }
 
-    Ok(format!("sqlite://{}", dbg!(database_file_path).to_str().context("Invalid Database Dir Path")?))
+    Ok(format!("sqlite://{}", database_file_path).to_str().context("Invalid Database Dir Path")?)
 }
 
 #[cfg(debug_assertions)]

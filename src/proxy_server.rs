@@ -8,6 +8,7 @@ use axum::{
     response::{Response},
     routing::{any}, Router,
 };
+use http::request;
 
 
 use std::{net::SocketAddr, fmt::Debug};
@@ -84,15 +85,46 @@ async fn handle_incoming_request(
     let uuid = uuid::Uuid::new_v4();
     state
         .event_tx.send((uuid, RequestData {
-            uri,
-            headers,
-            method,
-            body: data, // TODO
+            uri: uri.clone(),
+            headers: headers.clone(),
+            method: method.clone(),
+            body: data.clone(), // TODO
             createdAt: chrono::Utc::now()
         }).into())?;
     
+    let origin = state.origin.clone();
+    let method2 = method.clone();
+    // let req_uri = request.uri().clone().to_string();
     let make_request = async || -> anyhow::Result<(ResponseData, axum::response::Response<axum::body::Body>)> {
-        let response = reqwest::get(state.origin).await?;
+        // let response = reqwest::get(state.origin).await?;
+        // reqwest::RequestBuilder();
+        let client = reqwest::Client::new();
+        let req_uri = &uri.to_string();
+        let value = origin.clone().join(&req_uri)?;
+        // let builder = request::Request::builder().method(method2).uri(value.as_str());
+        let mut bd = client.request(method2, value);
+        // reqwest::RequestBuilder::new();
+
+        for (name, value) in headers.iter() {
+            if name != hyper::header::TRANSFER_ENCODING && name != hyper::header::HOST {
+                bd = bd.header(name, value);
+            }
+        }
+        bd = bd.header(hyper::header::HOST, origin.host_str().unwrap());
+        // let response_bytes = response.bytes().await?;
+        // let body = hyper::Body::from(response_bytes.clone());
+        let data = bd.body(data);
+        // dbg!(&data);
+        let response = data.send().await?;
+        // req
+
+
+        // let resp = client.("http://httpbin.org/delete")
+        //     .basic_auth("admin", Some("good password"))
+        //     .send()
+        //     .await?;
+
+
         let response_builder = http::Response::builder();
         let mut builder = response_builder.status(response.status());
         let response_headers = response.headers().clone();
