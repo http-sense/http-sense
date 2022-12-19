@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "HTTP Reverse Proxy with remote monitoring"
+documentation = "https://github.com/http-sense/http-sense"
+readme = "README.md"
+homepage = "https://www.httpsense.com"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
