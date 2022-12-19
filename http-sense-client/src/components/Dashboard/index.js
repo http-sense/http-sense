@@ -41,6 +41,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   });
 
   return (
