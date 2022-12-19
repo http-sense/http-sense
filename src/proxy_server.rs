@@ -2,16 +2,17 @@ use crate::{db::{RequestStorage}, model::{RequestData, ResponseData, ResponseErr
 
 use axum::{
     body::{Body},
-    extract::{State},
+    extract::{State, FromRef},
     http::StatusCode,
     http::{Request},
     response::{Response},
     routing::{any}, Router,
 };
 use http::request;
+use mime::Mime;
 
 
-use std::{net::SocketAddr, fmt::Debug};
+use std::{net::SocketAddr, fmt::Debug, borrow::Cow};
 
 trait MyTrait: RequestStorage + std::fmt::Debug {}
 type RequestId = uuid::Uuid;
@@ -35,6 +36,30 @@ impl From<(RequestId, ResponseData)> for ProxyEvent {
         ProxyEvent::ResponseRecv(value.0, value.1)
     }
 }
+
+// pub async fn text_with_charset(self, default_encoding: &str, byte: bytes::Bytes) -> String {
+//     let content_type = self
+//         .headers()
+//         .get(http::header::CONTENT_TYPE)
+//         .and_then(|value| value.to_str().ok())
+//         .and_then(|value| value.parse::<Mime>().ok());
+//     let encoding_name = content_type
+//         .as_ref()
+//         .and_then(|mime| mime.get_param("charset").map(|charset| charset.as_str()))
+//         .unwrap_or(default_encoding);
+//     let encoding = encoding_rs::Encoding::for_label(encoding_name.as_bytes()).unwrap_or(encoding_rs::UTF_8);
+
+
+//     let (text, _, _) = encoding.decode(&byte);
+//     if let Cow::Owned(s) = text {
+//         return Ok(s);
+//     }
+//     unsafe {
+//         // decoding returned Cow::Borrowed, meaning these bytes
+//         // are already valid utf8
+//         Ok(String::from_utf8_unchecked(byte.to_vec()))
+//     }
+// }
 
 #[derive(Debug, Clone)]
 struct AppState {
@@ -101,7 +126,7 @@ async fn handle_incoming_request(
     let make_request = async || -> anyhow::Result<(ResponseData, axum::response::Response<axum::body::Body>)> {
         // let response = reqwest::get(state.origin).await?;
         // reqwest::RequestBuilder();
-        let client = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).build()?;
+        let client = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).gzip(true).brotli(true).deflate(true).build()?;
         let req_uri = &uri.to_string();
         let value = origin.clone().join(&req_uri)?;
         // let builder = request::Request::builder().method(method2).uri(value.as_str());
@@ -138,7 +163,18 @@ async fn handle_incoming_request(
             }
         }
         // builder = builder.header(hyper::header::TRANSFER_ENCODING, "none");
+        // let response_str= response.text().await?;
         let response_bytes = response.bytes().await?;
+        // dbg!(&response_str);
+        // let response_bytes = bytes::Bytes::copy_from_slice(response_str.clone().as_bytes());
+        
+        // let resopnse_bytes = match response.text().await {
+        //     Ok(x) => x,
+        //     Error(e) => {
+        //         response.bytes().await?
+        //     }
+
+        // }
         let body = hyper::Body::from(response_bytes.clone());
         // dbg!("Added body");
         // if !builder.headers_ref().unwrap().contains_key(hyper::header::CONTENT_LENGTH) {

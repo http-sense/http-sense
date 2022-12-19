@@ -68,6 +68,8 @@ pub struct ResponseData {
 impl ResponseData {
     pub fn utf8_body(&self) -> anyhow::Result<String> {
         let x_body = self.body.clone();
+        dbg!(x_body.clone());
+        dbg!(String::from_utf8_lossy(x_body.borrow()));
         Ok(std::str::from_utf8(x_body.borrow()).map(|x| x.to_string())?)
     }
 
