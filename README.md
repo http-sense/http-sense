@@ -8,6 +8,10 @@ HTTP Sense is a `reverse-proxy + network monitor` for your http server.
 - Debug your backend server in development
 - Just for fun
 
+# Installation
+```
+cargo install http-sense
+```
 
 # CLI Usage
 ```
