@@ -45,3 +45,11 @@ a {
 .main-nav-items:not(:last-child) {
   margin-bottom: 1.5em;
 }
+
+.table-row:hover {
+  background-color: #f7f7f7;
+}
+
+.table-row {
+  cursor: pointer;
+}

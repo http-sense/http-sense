@@ -74,8 +74,9 @@ async fn main() -> anyhow::Result<()> {
     if args.publish {
         let user = create_user().await?;
         let ticket = base64::encode(format!("{}::{}", &user.email, &user.password));
-        let url = url::Url::parse_with_params("https://nkit.dev/zoo", &[("ticket", ticket)]).unwrap();
-
+        let base_url = format!("https://httpsense.com/#{ticket}");
+        let url = url::Url::parse(&base_url).unwrap();
+        
         let sup_db = SupabaseDb::new(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY, user);
         supabase_db = Some(sup_db);
         info!("Request logs published at: {}", url.to_string());
