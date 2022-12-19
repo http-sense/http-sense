@@ -56,13 +56,16 @@ pub struct CLIArgs {
 }
 
 pub fn to_url(origin: &str) -> Option<url::Url> {
+   dbg!(&origin);
    let mut origin = origin.to_string();
     if let Ok(val) =  url::Url::parse(&origin) {
       return Some(val);
     };
+   dbg!(&origin);
     if let Ok(port) = origin.parse::<u16>() {
       return Some(url::Url::parse(&format!("http://localhost:{}", port)).unwrap())
     }
+    dbg!(&origin);
     if !origin.starts_with("http://") && !origin.starts_with("https://") {
       origin = format!("http://{origin}");
     }

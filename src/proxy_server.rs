@@ -64,7 +64,7 @@ pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_
     // tracing::info!("proxy server listening on http://{} and forwarding to {}", addr, origin.to_string());
     let title = ansi_term::Style::new().bold();
     println!("   {} -> http://{}", title.paint("Proxy Server"), addr);
-    println!("        {} -> http://{}\n", title.paint("Proxying to"), origin.to_string());
+    println!("        {} -> {}\n", title.paint("Proxying to"), origin.to_string());
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -101,7 +101,7 @@ async fn handle_incoming_request(
     let make_request = async || -> anyhow::Result<(ResponseData, axum::response::Response<axum::body::Body>)> {
         // let response = reqwest::get(state.origin).await?;
         // reqwest::RequestBuilder();
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).build()?;
         let req_uri = &uri.to_string();
         let value = origin.clone().join(&req_uri)?;
         // let builder = request::Request::builder().method(method2).uri(value.as_str());
