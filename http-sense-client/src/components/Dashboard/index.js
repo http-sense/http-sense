@@ -57,7 +57,7 @@ const Dashboard = () => {
       <Drawer
         isOpen={isOpen}
         placement="right"
-        size="full"
+        size="xl"
         onClose={onClose}
         portalProps={selectedRow}
       >
@@ -181,7 +181,7 @@ const Dashboard = () => {
                       RESPONSE BODY
                     </Text>
                     <Code fontSize="1.4rem" variant="subtle" colorScheme="teal">
-                      {selectedRow.response?.body}
+                      {(selectedRow.response?.body)}
                     </Code>
                   </Flex>
                 )) ||
