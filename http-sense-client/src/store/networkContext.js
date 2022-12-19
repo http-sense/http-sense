@@ -63,6 +63,33 @@ export const NetworkContextProvider = props => {
       )
       .subscribe();
 
+    async function bootstrap_requests() {
+      console.log("Bootstrapping");
+      let requests = await supabase.from('request').select();
+      let responses = await supabase.from('response').select();
+          setTraffic(prevTraffic => {
+            let prevRequestIds = new Set(prevTraffic.map(x => x.id));
+
+            let traffic =  [...prevTraffic, ...requests.data.filter(x => !prevRequestIds.has(x.id)).map(x => ({
+              id: x.id,
+              request: x.content
+            }))];
+
+            for (const response of responses.data) {
+              for (let item of traffic) {
+                if (item.id === response.request_id) {
+                  item.response = response.content;
+                }
+              }
+            }
+            console.log(traffic)
+            return traffic;
+          });
+    }
+
+    isLoggedIn && bootstrap_requests();
+
+
   return (
     <NetworkContext.Provider value={context}>
       {props.children}

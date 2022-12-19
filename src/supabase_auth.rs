@@ -1,4 +1,4 @@
-use go_true::Client;
+
 use serde::Deserialize;
 use crate::config::{SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY};
 use rand::{thread_rng, Rng};
@@ -29,7 +29,7 @@ macro_rules! to_session {
 	};
 }
 
-fn get_random_string(len: usize) -> String {
+pub fn get_random_string(len: usize) -> String {
     let rand_string: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(len)
@@ -91,7 +91,7 @@ impl AuthenticatedUser {
 		self.session.user.id.clone()
 	}
 	pub async fn maybe_refresh(&mut self) -> anyhow::Result<bool> {
-		if (self.should_refresh()) {
+		if self.should_refresh() {
 			self.refresh_token().await?;
 			Ok(true)
 		} else {
@@ -99,7 +99,7 @@ impl AuthenticatedUser {
 		}
 	}
 	pub fn should_refresh(&self) -> bool {
-		let refresh_cliff = (self.session_refreshed_at.timestamp() + self.session.expires_in as i64/2);
+		let refresh_cliff = self.session_refreshed_at.timestamp() + self.session.expires_in as i64/2;
 		refresh_cliff < chrono::Utc::now().timestamp()
 	}
 	async fn refresh_token(&mut self) -> anyhow::Result<()> {

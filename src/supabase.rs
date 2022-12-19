@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
-use crate::{db::RequestStorage, model::{RequestData, ResponseData}, supabase_auth::{AuthenticatedUser, create_user}, config::{SUPABASE_ANON_KEY, SUPABASE_PROJECT_URL}};
+use crate::{db::RequestStorage, model::{RequestData, ResponseData, ResponseError}, supabase_auth::{AuthenticatedUser}};
 use anyhow::Context;
-use bytes::Bytes;
+
 use postgrest::Postgrest;
 use serde_json::json;
 
@@ -31,7 +31,7 @@ impl SupabaseDb {
 			serde_json::to_string(content)?
 		).execute().await?;
 
-		if (!r.status().is_success()) {
+		if !r.status().is_success() {
 			let r_str = format!("{:?}", &r);
 			anyhow::bail!("bad response from supabase {}\n Text {}", r_str,  &r.text().await?)
 		}
@@ -55,6 +55,15 @@ impl RequestStorage for SupabaseDb {
 	}
 
 	async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
+		self.insert_in_table("response", &json!({
+			"content": res.serialize_response(),
+			"request_id": request_id,
+			"user_id": self.user.uid(),
+			"created_at": res.createdAt.to_rfc3339()
+		})).await?;
+		Ok(())
+	}
+	async fn store_error(&mut self, request_id: u64, res: &ResponseError) -> anyhow::Result<()> {
 		self.insert_in_table("response", &json!({
 			"content": res.serialize_response(),
 			"request_id": request_id,
