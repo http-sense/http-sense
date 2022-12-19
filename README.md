@@ -14,6 +14,8 @@ cargo install http-sense
 ```
 
 # CLI Usage
+Run `http-sense --help` to get more details 
+
 ```
 Usage: http-sense [OPTIONS] <ORIGIN_URL>
 
@@ -42,13 +44,13 @@ Options:
 
           [default: 127.0.0.1]
 
-      --ui-port <UI_PORT>
-          Port at which ui server should listen (Alpha)
+      --api-port <API_PORT>
+          Port at which api server should listen (Alpha)
 
           [default: 6101]
 
-      --ui-addr <UI_ADDR>
-          Address that ui server should bind to
+      --api-addr <API_ADDR>
+          Address that api server should bind to
 
           [default: 127.0.0.1]
 
@@ -57,6 +59,7 @@ Options:
 
   -V, --version
           Print version information
+
 
 
 ```
