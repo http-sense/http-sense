@@ -1,5 +1,9 @@
 use std::str::FromStr;
+use bytes::{self, Bytes};
+use crate::config::{SUPABASE_ANON_KEY, SUPABASE_PROJECT_URL};
 
+
+use crate::supabase_auth::create_user;
 use crate::{db::RequestStorage, model::{RequestData, ResponseData, ResponseError}, supabase_auth::{AuthenticatedUser}};
 use anyhow::Context;
 

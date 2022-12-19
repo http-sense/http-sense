@@ -74,7 +74,8 @@ async fn main() -> anyhow::Result<()> {
     if args.publish {
         let user = create_user().await?;
         let ticket = base64::encode(format!("{}::{}", &user.email, &user.password));
-        let base_url = format!("https://httpsense.com/#{ticket}");
+        let uuid = user.uid();
+        let base_url = format!("https://httpsense.com/{uuid}/#{ticket}");
         let url = url::Url::parse(&base_url).unwrap();
         
         let sup_db = SupabaseDb::new(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY, user);
