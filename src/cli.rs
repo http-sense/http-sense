@@ -26,6 +26,8 @@ Make sense of what is coming and what is leaving your http server.
 
    http-sense http://localhost:8004 --proxy-port 6001 --proxy-addr 0.0.0.0
 
+Http Sense will also run an Api server where you can get details about recent requests and responses by calling
+http://localhost:6101/api/requests
 ", banner=bold_style.paint(banner), tldr_title=bold_under_style.paint("TLDR"))
 }
 
@@ -45,11 +47,11 @@ pub struct CLIArgs {
    pub proxy_addr: Addr,
 
 
-   #[arg(long, default_value_t=6101, help="Port at which ui server should listen (Alpha)")]
-   pub ui_port: Port,
+   #[arg(long, default_value_t=6101, help="Port at which api server should listen (Alpha)")]
+   pub api_port: Port,
 
-   #[arg(long, default_value_t={"127.0.0.1".to_string()}, help="Address that ui server should bind to")]
-   pub ui_addr: Addr,
+   #[arg(long, default_value_t={"127.0.0.1".to_string()}, help="Address that api server should bind to")]
+   pub api_addr: Addr,
 }
 
 pub fn to_url(origin: &str) -> Option<url::Url> {

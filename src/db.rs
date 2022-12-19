@@ -10,6 +10,7 @@ use anyhow::Context;
 
 
 
+use serde::Serialize;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::Connection;
 use sqlx::SqlitePool;
@@ -19,8 +20,8 @@ pub struct DB {
     pool: SqlitePool,
 }
 
-#[derive(Clone, Debug)]
-struct DBRequest {
+#[derive(Clone, Debug, Serialize)]
+pub struct DBRequest {
     request_id: i64,
 
     request_ts: String,
@@ -152,7 +153,7 @@ impl DB {
         Ok(())
     }
 
-    pub async fn get_recent_requests(&self) -> anyhow::Result<Vec<ReqRes>> {
+    pub async fn get_recent_requests(&self) -> anyhow::Result<Vec<DBRequest>> {
         // let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM request")
         // // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
         //     .fetch_all(&self.pool)
@@ -175,11 +176,12 @@ impl DB {
         // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
         .fetch_all(&self.pool)
         .await?;
+        return Ok(result);
 
-        Ok(result
-            .into_iter()
-            .map(|x| ReqRes::try_from(x))
-            .collect::<anyhow::Result<Vec<_>>>()?)
+        // Ok(result
+        //     .into_iter()
+        //     .map(|x| ReqRes::try_from(x))
+        //     .collect::<anyhow::Result<Vec<_>>>()?)
 
     }
 

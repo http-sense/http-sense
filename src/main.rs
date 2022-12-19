@@ -6,7 +6,7 @@ mod socketio;
 mod db;
 mod model;
 mod proxy_server;
-mod ui_server;
+mod api_server;
 mod supabase_auth;
 use anyhow::Context;
 use clap::Parser;
@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
             tracing::error!("Proxy server has stopped");
             v?;
         }
-        j = ui_server::start_server(ui_db, args.ui_port, &args.ui_addr) => {
+        j = api_server::start_server(ui_db, args.api_port, &args.api_addr) => {
             tracing::error!("UI server has stopped");
             j?;
         }
