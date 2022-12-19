@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import React, { useContext } from 'react';
 import {
   Flex,
   Heading,
@@ -10,7 +10,9 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerBody,
+  DrawerCloseButton,
   Icon,
+  Box,
 } from '@chakra-ui/react';
 
 // components
@@ -63,6 +65,7 @@ const Dashboard = () => {
       >
         <DrawerOverlay />
         <DrawerContent>
+          <DrawerCloseButton />
           <DrawerHeader textAlign="center">
             <Heading fontWeight="normal" mt="2rem">
               Transcation Details
@@ -130,7 +133,13 @@ const Dashboard = () => {
                   <Text fontSize="1.4rem" fontWeight="semibold">
                     REQUEST HEADERS
                   </Text>
-                  <Code fontSize="1.4rem" variant="subtle" colorScheme="yellow">
+
+                  <Code
+                    wordBreak="break-word"
+                    fontSize="1.4rem"
+                    variant="subtle"
+                    colorScheme="yellow"
+                  >
                     {Object.keys(selectedRow.request.headers).map(key => {
                       return (
                         <>
@@ -147,10 +156,12 @@ const Dashboard = () => {
                       <Text fontSize="1.4rem" fontWeight="semibold">
                         REQUEST BODY
                       </Text>
+
                       <Code
                         fontSize="1.4rem"
                         variant="subtle"
                         colorScheme="yellow"
+                        wordBreak="break-word"
                       >
                         {selectedRow.response?.body}
                       </Code>
@@ -162,13 +173,19 @@ const Dashboard = () => {
                     <Text fontSize="1.4rem" fontWeight="semibold">
                       RESPONSE HEADERS
                     </Text>
-                    <Code fontSize="1.4rem" variant="subtle" colorScheme="teal">
+
+                    <Code
+                      wordBreak="break-word"
+                      fontSize="1.4rem"
+                      variant="subtle"
+                      colorScheme="teal"
+                    >
                       {Object.keys(selectedRow.response?.headers).map(key => {
                         return (
-                          <>
+                          <React.Fragment key={key}>
                             {key}: {selectedRow.response?.headers[key]};
                             <br />
-                          </>
+                          </React.Fragment>
                         );
                       })}
                     </Code>
@@ -180,8 +197,13 @@ const Dashboard = () => {
                     <Text fontSize="1.4rem" fontWeight="semibold">
                       RESPONSE BODY
                     </Text>
-                    <Code fontSize="1.4rem" variant="subtle" colorScheme="teal">
-                      {(selectedRow.response?.body)}
+                    <Code
+                      fontSize="1.4rem"
+                      variant="subtle"
+                      colorScheme="teal"
+                      wordBreak="break-word"
+                    >
+                      {selectedRow.response?.body}
                     </Code>
                   </Flex>
                 )) ||
