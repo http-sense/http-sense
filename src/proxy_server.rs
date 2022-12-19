@@ -61,7 +61,10 @@ pub async fn start_server(tx: tokio::sync::broadcast::Sender<ProxyEvent>, proxy_
         .with_state(app_state);
 
     let addr: SocketAddr = format!("{}:{}", proxy_addr, proxy_port).parse()?;
-    tracing::info!("proxy server listening on http://{} and forwarding to {}", addr, origin.to_string());
+    // tracing::info!("proxy server listening on http://{} and forwarding to {}", addr, origin.to_string());
+    let title = ansi_term::Style::new().bold();
+    println!("   {} -> http://{}", title.paint("Proxy Server"), addr);
+    println!("        {} -> http://{}\n", title.paint("Proxying to"), origin.to_string());
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

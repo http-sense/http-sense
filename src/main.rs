@@ -33,7 +33,7 @@ async fn infinite_sleep() -> anyhow::Result<()> {
 #[async_trait::async_trait(?Send)]
 impl<T: RequestStorage> EventConsumer for T {
     async fn consume(&mut self, mut rx: tokio::sync::broadcast::Receiver<ProxyEvent>, consumer_name: &str) -> anyhow::Result<()> {
-        tracing::info!("Consumer attached: {}", consumer_name);
+        // tracing::info!("Consumer attached: {}", consumer_name);
         let mut requests: HashMap<uuid::Uuid, u64> = HashMap::new();
         loop {
             let value = rx.recv().await?;
@@ -62,6 +62,7 @@ impl<T: RequestStorage> EventConsumer for T {
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     log::set_max_level(log::LevelFilter::Off);
+    println!("Starting: \n");
 
     let db = DB::connect(&get_database_file()?).await?;
     let mut shared_db = Arc::new(db);
@@ -80,7 +81,9 @@ async fn main() -> anyhow::Result<()> {
         
         let sup_db = SupabaseDb::new(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY, user);
         supabase_db = Some(sup_db);
-        info!("Request logs published at: {}", url.to_string());
+
+        let title = ansi_term::Style::new().bold();
+        println!("   {} -> {}\n", title.paint("Dashboard Url"), url.to_string());
     }
 
     let publish_future = if let Some(sup_db)  = supabase_db.as_mut() {
