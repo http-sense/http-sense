@@ -57,7 +57,7 @@ const Dashboard = () => {
       <Drawer
         isOpen={isOpen}
         placement="right"
-        size="lg"
+        size="full"
         onClose={onClose}
         portalProps={selectedRow}
       >
