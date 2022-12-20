@@ -45,7 +45,7 @@ const Home = () => {
             color="#22c35e"
             fontSize="4xl"
             fontWeight="bold"
-            href="https://github.com/http-sense/http-sense"
+            href="https://github.com/http-sense/http-sense#http-sense"
             target="_blank"
             textDecor="underline"
           >
