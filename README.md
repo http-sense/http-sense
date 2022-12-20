@@ -13,6 +13,13 @@ HTTP Sense is a reverse proxy and network monitoring tool that provides comprehe
 - As a debugging/monitoring tool during development, like the Browser DevTools are for the browser
 - Just for fun
 
+# References
+- Video Demo: https://www.youtube.com/watch?v=Qvx4-iaqDq4
+- Homepage: https://www.httpsense.com  
+- Crates: https://crates.io/crates/http-sense  
+- Git Repository: https://github.com/http-sense/http-sense  
+
+
 # Setting up the repository for development
 You will need `cargo` in order to install and run the HTTP Sense CLI. If you do not have cargo installed on your system, please follow the below guide from the official rust-lang docs:
 
@@ -93,11 +100,6 @@ Options:
 
 
 ```
-
-# Ref
-Homepage: https://www.httpsense.com  
-Crates: https://crates.io/crates/http-sense  
-Git Repository: https://github.com/http-sense/http-sense  
 
 # Contributors
 <a href="https://github.com/http-sense/http-sense/graphs/contributors">
