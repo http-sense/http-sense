@@ -19,7 +19,6 @@ HTTP Sense is a reverse proxy and network monitoring tool that provides comprehe
 - Crates: https://crates.io/crates/http-sense  
 - Git Repository: https://github.com/http-sense/http-sense  
 
-
 # Setting up the repository for development
 You will need `cargo` in order to install and run the HTTP Sense CLI. If you do not have cargo installed on your system, please follow the below guide from the official rust-lang docs:
 
@@ -97,11 +96,12 @@ Options:
   -V, --version
           Print version information
 
-
-
 ```
 
-# Contributors
+# Contributing
+If you're looking to contribute to HTTP Sense, please read and follow the guidelines from [CONTRIBUTING.md](https://github.com/http-sense/http-sense/blob/main/CONTRIBUTING.md).
+
+# Maintainers
 <a href="https://github.com/http-sense/http-sense/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=http-sense/http-sense" />
 </a>
