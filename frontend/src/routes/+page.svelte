@@ -1,2 +1,4 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<pre><code>
+Please send a GET request to /api/requests endpoint until we scrap up our frontend
+</code></pre>
+
