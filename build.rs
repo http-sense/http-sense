@@ -16,18 +16,19 @@ fn main() {
     println!("cargo:rerun-if-changed=frontend/");
     // Use the `cc` crate to build a C file and statically link it.
     // let output = if cfg!(target_os = "windows") {
+    let frontend_build_path = out_dir.join("frontend_build").to_str().unwrap().to_string();
 
     let _output = Command::new("bash")
-            .args(["-c", "cd frontend && npm i && build_dir=temporary npm run build"])
+            .args(["-c", &format!("cd frontend && npm i && build_dir={frontend_build_path} npm run build")])
             .output()
             .expect("failed to execute process");
 
     if !_output.status.success() {
         panic!("couldn't run command successfully:  {:?}", _output);
     }
-    fs_extra::dir::remove(out_dir.join("frontend_build")).unwrap();
-    fs::create_dir_all(out_dir.join("frontend_build")).unwrap();
-    fs_extra::dir::move_dir("frontend/temporary", out_dir.join("frontend_build"), &CopyOptions::default()).unwrap();
+    // fs_extra::dir::remove(out_dir.join("frontend_build")).unwrap();
+    // fs::create_dir_all(out_dir.join("frontend_build")).unwrap();
+    // fs_extra::dir::move_dir("frontend/temporary", out_dir.join("frontend_build"), &CopyOptions::default()).unwrap();
     //} else {
     //    Command::new("sh")
     //            .arg("-c")
