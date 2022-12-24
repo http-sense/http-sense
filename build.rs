@@ -25,6 +25,7 @@ fn main() {
     if !_output.status.success() {
         panic!("couldn't run command successfully:  {:?}", _output);
     }
+    fs_extra::dir::remove(out_dir.join("frontend_build")).unwrap();
     fs::create_dir_all(out_dir.join("frontend_build")).unwrap();
     fs_extra::dir::move_dir("frontend/temporary", out_dir.join("frontend_build"), &CopyOptions::default()).unwrap();
     //} else {
