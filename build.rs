@@ -9,7 +9,7 @@ fn main() {
     // let output = if cfg!(target_os = "windows") {
 
     let _output = Command::new("bash")
-            .args(["-c", "cd frontend && npm i && npm run build"])
+            .args(["-c", "cd frontend && npm i && build_dir=temporary npm run build"])
             .output()
             .expect("failed to execute process");
 
