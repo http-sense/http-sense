@@ -26,7 +26,7 @@ use std::{net::SocketAddr, sync::Arc};
 struct AppState {
     db: Arc<DB>,
 }
-static PROJECT_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/frontend/build");
+static PROJECT_DIR: Dir<'_> = include_dir!("$OUT_DIR/frontend_build");
 
 pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str) -> anyhow::Result<()> {
     let app_state = AppState { db };
