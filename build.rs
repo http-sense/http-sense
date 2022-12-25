@@ -18,6 +18,8 @@ fn main() {
         .expect("failed to execute process");
 
     if !_output.status.success() {
-        panic!("couldn't run command successfully:  {:?}", _output);
+        println!("Stdout:\n{}", String::from_utf8_lossy(&_output.stdout));
+        println!("Stderr:\n{}", String::from_utf8_lossy(&_output.stderr));
+        panic!("couldn't run command successfully: state: {:?}", _output.status);
     }
 }

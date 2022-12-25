@@ -900,6 +900,7 @@ dependencies = [
  "sqlx",
  "tempfile",
  "tokio",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
  "url",

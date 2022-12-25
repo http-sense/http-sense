@@ -1,6 +1,7 @@
 use include_dir::{include_dir, Dir};
 use crate::axum_utils::*;
 use crate::db::{DB};
+use tower_http::cors::CorsLayer;
 
 use axum::{
     body::{Body, Bytes},
@@ -87,11 +88,16 @@ pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str) -> anyhow::R
         .route("/api/requests", get(get_requests))
         .route("/*path", get(get_frontend))
         .route("/", get(get_frontend))
+        .layer(CorsLayer::permissive())
         .with_state(app_state);
 
     let addr: SocketAddr = format!("{}:{}", ui_addr, ui_port).parse()?;
     let title = ansi_term::Style::new().bold();
     println!("   {} -> http://{}\n", title.paint("API Server"), addr);
+    if cfg!(debug_assertions) {
+        // Easier to build local frontend
+        println!("   {} -> http://{}\n", title.paint("API Svelte Server"), format!("localhost:5173/?api_url=http://localhost:{}/api", ui_port));
+    }
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
