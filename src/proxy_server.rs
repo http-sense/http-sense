@@ -25,6 +25,26 @@ pub enum ProxyEvent {
     RequestError(RequestId, ResponseError),
 }
 
+impl ProxyEvent {
+    pub fn serialize_response(&self) -> serde_json::Value {
+        macro_rules! ser {
+            ($i:ident, $d:ident) => {
+                return {
+                    let mut v: serde_json::Value = $d.serialize_response();
+                    let obj = v.as_object_mut().unwrap();
+                    obj.insert("id".to_string(), serde_json::Value::String($i.to_string()));
+                    v
+                }
+            };
+        }
+        match self {
+            Self::RequestRecv(i, d) => ser!(i, d),
+            Self::ResponseRecv(i, d) => ser!(i, d),
+            Self::RequestError(i, d) => ser!(i, d),
+        }
+    }
+}
+
 impl From<(RequestId, RequestData)> for ProxyEvent {
     fn from(value: (RequestId, RequestData)) -> Self {
         ProxyEvent::RequestRecv(value.0, value.1)

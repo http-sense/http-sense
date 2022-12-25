@@ -11,6 +11,7 @@
     - Support streaming requests
 
 - [ ] Socks5 Proxy integration
+- [ ] Support HTTP2 and HTTP3
 
 - What is interesting for user:
     - The request sent by client to proxy_server

@@ -86,6 +86,7 @@ async fn main() -> anyhow::Result<()> {
     let args = cli::CLIArgs::parse();
     let (tx, rx) = tokio::sync::broadcast::channel(128);
     let rx2 = tx.subscribe();
+    let rx3 = tx.subscribe();
     let mut supabase_db = None;
     if args.publish {
         let user = create_user().await?;
@@ -119,7 +120,7 @@ async fn main() -> anyhow::Result<()> {
             tracing::error!("Proxy server has stopped");
             v?;
         }
-        j = api_server::start_server(ui_db, args.api_port, &args.api_addr) => {
+        j = api_server::start_server(ui_db, args.api_port, &args.api_addr, rx3) => {
             tracing::error!("UI server has stopped");
             j?;
         }

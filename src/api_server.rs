@@ -1,6 +1,10 @@
 use include_dir::{include_dir, Dir};
+use axum::extract::ws::{
+    Message, WebSocket, WebSocketUpgrade
+};
 use crate::axum_utils::*;
 use crate::db::{DB};
+use crate::proxy_server::ProxyEvent;
 use tower_http::cors::CorsLayer;
 
 use axum::{
@@ -15,16 +19,17 @@ use axum::{
 
 use std::{net::SocketAddr, sync::Arc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct AppState {
     db: Arc<DB>,
+    event_rx: tokio::sync::broadcast::Receiver<ProxyEvent>
 }
 static PROJECT_DIR: Dir<'_> = include_dir!("$OUT_DIR/frontend_build");
 
 // Endpoints
 #[axum_macros::debug_handler]
 async fn get_requests(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     _request: Request<Body>,
 ) -> AxumResult<impl IntoResponse> {
     let rows = state.db.get_recent_requests().await?;
@@ -35,7 +40,7 @@ async fn get_requests(
 
 #[axum_macros::debug_handler]
 async fn get_frontend(
-    State(_state): State<AppState>,
+    State(_state): State<Arc<AppState>>,
     request: Request<Body>,
 ) -> AxumResult<axum::response::Response> {
     let file_path = request.uri().path().to_string();
@@ -86,12 +91,37 @@ async fn get_frontend(
     }
 }
 
+#[axum_macros::debug_handler]
+async fn set_websocket(
+    ws: WebSocketUpgrade,
+    State(_state): State<Arc<AppState>>
+) -> impl IntoResponse {
+    let mut rx = _state.event_rx.resubscribe();
+    ws.on_upgrade(async move |mut socket| {
+        loop {
+            let val = match rx.recv().await {
+                Ok(v) => v,
+                Err(e) => {
+                    println!("Event Reciever dead. Closing websocket: {:?}", e);
+                    return
+                }
+            };
+            let res = val.serialize_response();
+            if let Err(e) = socket.send(Message::Text(serde_json::to_string(&res).unwrap())).await {
+                println!("Websocket client disconnect: {:?}. Closing", e);
+                return 
+            };
+        }
+    })
+}
 
-pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str) -> anyhow::Result<()> {
-    let app_state = AppState { db };
+
+pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str, event_rx: tokio::sync::broadcast::Receiver<ProxyEvent>) -> anyhow::Result<()> {
+    let app_state = Arc::new(AppState { db, event_rx });
 
     let app = Router::new()
         .route("/api/requests", get(get_requests))
+        .route("/api/ws", get(set_websocket))
         .route("/*path", get(get_frontend))
         .route("/", get(get_frontend))
         .layer(CorsLayer::permissive())
