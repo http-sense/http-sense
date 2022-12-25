@@ -3,6 +3,12 @@
 - [ ] Improve Port selection
     - port-ranges: Pick first available if first is busy
 
+- [ ] Improve proxy
+    - Reduce the amount of headers being modified
+    - Add extra headers to store previous headers
+    - Document all the headers modified
+    - Support streaming requests
+
 - [ ] Socks5 Proxy integration
 
 - What is interesting for user:
