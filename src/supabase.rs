@@ -108,24 +108,33 @@ impl RequestStorage for SupabaseDb {
     }
 }
 
-#[ignore]
-#[tokio::test]
-async fn my_test() {
-    let mut db = SupabaseDb::new(
-        SUPABASE_PROJECT_URL,
-        SUPABASE_ANON_KEY,
-        create_user().await.unwrap(),
-    );
-    let r = db
-        .store_request(&RequestData {
-            headers: Default::default(),
-            uri: "/hello".parse().unwrap(),
-            method: http::Method::GET,
-            body: Bytes::from_static(b"Just checking"),
-            createdAt: chrono::Utc::now(),
-        })
-        .await;
-    dbg!(r);
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-    assert_eq!(1, 2);
+	#[ignore]
+	#[tokio::test]
+	async fn my_test() {
+		use crate::supabase_auth::*;
+		use crate::config::*;
+		use bytes::Bytes;
+
+		let mut db = SupabaseDb::new(
+			SUPABASE_PROJECT_URL,
+			SUPABASE_ANON_KEY,
+			create_user().await.unwrap(),
+		);
+		let r = db
+			.store_request(&RequestData {
+				headers: Default::default(),
+				uri: "/hello".parse().unwrap(),
+				method: http::Method::GET,
+				body: Bytes::from_static(b"Just checking"),
+				createdAt: chrono::Utc::now(),
+			})
+			.await;
+		dbg!(r);
+
+		assert_eq!(1, 2);
+	}
 }
