@@ -8,11 +8,12 @@ fn main() {
     let out_dir = PathBuf::from(out_dir_str);
     println!("cargo:rerun-if-changed=frontend/");
     let frontend_build_path = out_dir.join("frontend_build").to_str().unwrap().to_string();
+    let frontend_source_path = out_dir.join("frotend_src").to_str().unwrap().to_string();
 
     let _output = Command::new("bash")
         .args([
             "-c",
-            &format!("cd frontend && npm i && build_dir={frontend_build_path} npm run build"),
+            &format!("cp -r frontend {frontend_source_path} && cd {frontend_source_path} && npm i && build_dir={frontend_build_path} npm run build"),
         ])
         .output()
         .expect("failed to execute process");
