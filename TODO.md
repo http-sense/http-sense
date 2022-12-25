@@ -1,5 +1,10 @@
 - [ ] Local UI: get it working with svelte
-    - cors setup
+    - [x] cors setup
+    - [ ] websocket
+    	- Backend setup
+    	- Frontend setup
+    	- Bootstrap setup
+
 - [ ] Logging: log all incoming requests to cli
 - [ ] Improve Port selection
     - port-ranges: Pick first available if first is busy
