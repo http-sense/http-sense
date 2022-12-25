@@ -14,7 +14,7 @@ use clap::Parser;
 use db::RequestStorage;
 
 use proxy_server::ProxyEvent;
-use tracing::info;
+
 
 use crate::{
     config::{get_database_file, SUPABASE_ANON_KEY, SUPABASE_PROJECT_URL},
@@ -45,7 +45,7 @@ impl<T: RequestStorage> EventConsumer for T {
     async fn consume(
         &mut self,
         mut rx: tokio::sync::broadcast::Receiver<ProxyEvent>,
-        consumer_name: &str,
+        _consumer_name: &str,
     ) -> anyhow::Result<()> {
         // tracing::info!("Consumer attached: {}", consumer_name);
         let mut requests: HashMap<uuid::Uuid, u64> = HashMap::new();

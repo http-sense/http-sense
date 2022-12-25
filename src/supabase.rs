@@ -1,8 +1,8 @@
-use crate::config::{SUPABASE_ANON_KEY, SUPABASE_PROJECT_URL};
-use bytes::{self, Bytes};
+
+use bytes::{self};
 use std::str::FromStr;
 
-use crate::supabase_auth::create_user;
+
 use crate::{
     db::RequestStorage,
     model::{RequestData, ResponseData, ResponseError},

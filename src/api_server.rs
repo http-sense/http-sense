@@ -1,13 +1,13 @@
 use include_dir::{include_dir, Dir};
 use crate::axum_utils::*;
-use crate::db::{ReqRes, DB};
+use crate::db::{DB};
 
 use axum::{
     body::{Body, Bytes},
     extract::State,
     http::Request,
     http::StatusCode,
-    response::{Html, IntoResponse},
+    response::{IntoResponse},
     routing::get,
     Json, Router,
 };
