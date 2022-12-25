@@ -13,7 +13,7 @@ fn main() {
     let _output = Command::new("bash")
         .args([
             "-c",
-            &format!("cp -r frontend {frontend_source_path} && cd {frontend_source_path} && npm i && build_dir={frontend_build_path} npm run build"),
+            &format!("pwd && rm -rf {frontend_source_path} && cp -r frontend {frontend_source_path} && cd {frontend_source_path} && npm i && build_dir={frontend_build_path} npm run build"),
         ])
         .output()
         .expect("failed to execute process");

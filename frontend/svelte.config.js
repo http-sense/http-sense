@@ -15,7 +15,8 @@ const config = {
 			pages: build_dir,
 			assets: build_dir,
 			fallback: 'index.html'
-		})
+		}),
+    prerender: {entries: []}
 	}
 };
 

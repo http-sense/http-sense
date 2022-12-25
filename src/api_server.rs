@@ -38,11 +38,12 @@ async fn get_frontend(
     State(_state): State<AppState>,
     request: Request<Body>,
 ) -> AxumResult<axum::response::Response> {
-    let file_path = request.uri().to_string();
+    let file_path = request.uri().path().to_string();
     let mut b = file_path.as_str();
     let b_orig = b;
     let b_html = format!("{}.html", b_orig);
     let b_dir_html = format!("{}/index.html", b_orig);
+    let mut status = StatusCode::OK;
 
     while b.starts_with("/") {
         b = &b[1..];
@@ -60,6 +61,10 @@ async fn get_frontend(
     while b.starts_with("/") {
         b = &b[1..];
     }
+    if PROJECT_DIR.get_file(b).is_none() {
+        status = StatusCode::NOT_FOUND;
+        b = "index.html";
+    }
 
     match PROJECT_DIR.get_file(b) {
         Some(x) => {
@@ -68,6 +73,7 @@ async fn get_frontend(
             let response_mime: &'static str = mime_guess::from_path(b).first_raw().unwrap();
 
             Ok((
+                status,
                 [(
                     http::header::CONTENT_TYPE,
                     http::HeaderValue::from_static(response_mime),
