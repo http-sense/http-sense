@@ -1,5 +1,5 @@
-use std::{borrow::Borrow};
-use serde_json:: {json};
+use serde_json::json;
+use std::borrow::Borrow;
 
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 // headers = hashmap
 // body = bytes
 // body = bytes
-
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RequestData {
@@ -23,7 +22,7 @@ pub struct RequestData {
     pub body: bytes::Bytes,
 
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub createdAt: chrono::DateTime<chrono::Utc>
+    pub createdAt: chrono::DateTime<chrono::Utc>,
 }
 
 impl RequestData {
@@ -60,9 +59,8 @@ pub struct ResponseData {
 
     pub body: bytes::Bytes,
 
-
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub createdAt: chrono::DateTime<chrono::Utc>
+    pub createdAt: chrono::DateTime<chrono::Utc>,
 }
 
 impl ResponseData {
@@ -97,7 +95,7 @@ impl ResponseData {
 pub struct ResponseError {
     #[serde(with = "chrono::serde::ts_milliseconds")]
     pub createdAt: chrono::DateTime<chrono::Utc>,
-    pub error: String
+    pub error: String,
 }
 impl ResponseError {
     pub fn serialize_response(&self) -> serde_json::Value {

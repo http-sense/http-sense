@@ -1,19 +1,18 @@
-use clap::Parser;
 use ansi_term::Style;
+use clap::Parser;
 
 type Port = u16;
 type Addr = String;
 
-
 fn create_about() -> String {
-   let bold_style = Style::new().bold();
-   let bold_under_style = Style::new().bold().underline();
-   let banner = "
+    let bold_style = Style::new().bold();
+    let bold_under_style = Style::new().bold().underline();
+    let banner = "
 +-+-+-+-+ +-+-+-+-+-+
 |H|T|T|P| |S|E|N|S|E|
 +-+-+-+-+ +-+-+-+-+-+
 ";
-   format!("
+    format!("
 {banner}
 Make sense of what is coming and what is leaving your http server.
 
@@ -36,39 +35,51 @@ http://localhost:6101/api/requests
 // #[command(author, version, about, long_about = ABOUT)]
 #[command(author, version, about, long_about = create_about())]
 pub struct CLIArgs {
-   pub origin_url: String,
+    pub origin_url: String,
 
-   #[arg(long, default_value_t=false, help="Publish requests to supabase db, allowing you to remotely access request details")]
-   pub publish: bool,
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Publish requests to supabase db, allowing you to remotely access request details"
+    )]
+    pub publish: bool,
 
-   #[arg(short='p', long, default_value_t=6100, help="Port at which proxy server should listen")]
-   pub proxy_port: Port,
+    #[arg(
+        short = 'p',
+        long,
+        default_value_t = 6100,
+        help = "Port at which proxy server should listen"
+    )]
+    pub proxy_port: Port,
 
-   #[arg(short='a', long, default_value_t={"127.0.0.1".to_string()}, help="Address that proxy server should bind to")]
-   pub proxy_addr: Addr,
+    #[arg(short='a', long, default_value_t={"127.0.0.1".to_string()}, help="Address that proxy server should bind to")]
+    pub proxy_addr: Addr,
 
+    #[arg(
+        long,
+        default_value_t = 6101,
+        help = "Port at which api server should listen (Alpha)"
+    )]
+    pub api_port: Port,
 
-   #[arg(long, default_value_t=6101, help="Port at which api server should listen (Alpha)")]
-   pub api_port: Port,
-
-   #[arg(long, default_value_t={"127.0.0.1".to_string()}, help="Address that api server should bind to")]
-   pub api_addr: Addr,
+    #[arg(long, default_value_t={"127.0.0.1".to_string()}, help="Address that api server should bind to")]
+    pub api_addr: Addr,
 }
 
 pub fn to_url(origin: &str) -> Option<url::Url> {
-   let mut origin = origin.to_string();
-    if let Ok(val) =  url::Url::parse(&origin) {
-      return Some(val);
+    let mut origin = origin.to_string();
+    if let Ok(val) = url::Url::parse(&origin) {
+        return Some(val);
     };
     if let Ok(port) = origin.parse::<u16>() {
-      return Some(url::Url::parse(&format!("http://localhost:{}", port)).unwrap())
+        return Some(url::Url::parse(&format!("http://localhost:{}", port)).unwrap());
     }
     if !origin.starts_with("http://") && !origin.starts_with("https://") {
-      origin = format!("http://{origin}");
+        origin = format!("http://{origin}");
     }
 
-    if let Ok(val) =  url::Url::parse(&origin) {
-      return Some(val);
+    if let Ok(val) = url::Url::parse(&origin) {
+        return Some(val);
     };
 
     None

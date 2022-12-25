@@ -8,7 +8,7 @@
 - [x] Convert body to string
 - [x] Handle request timeout
     - [x] And maybe other errors too
-- [ ] Improve logging
+- [x] Improve logging
 - [x] Temporary file for local sqlite
 - [ ] Improve Command line args
     - Also take port ranges

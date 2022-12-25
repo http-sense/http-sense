@@ -6,10 +6,6 @@ use crate::model::ResponseData;
 use crate::model::ResponseError;
 use anyhow::Context;
 
-
-
-
-
 use serde::Serialize;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::Connection;
@@ -40,11 +36,26 @@ pub struct ReqRes {
     pub response: Option<(chrono::DateTime<chrono::Utc>, ResponseData)>,
 }
 
-
+impl ReqRes {
+    fn to_json_value(&self) -> serde_json::Value {
+        let x = self;
+        let request_value = x.request.1.serialize_response();
+        let response_value = x.response.clone().map(|x| x.1.serialize_response());
+        serde_json::json!({
+            "request_id": x.request_id,
+            "request_data": request_value,
+            "request_timestamp": x.request.0.to_rfc3339(),
+            "response_data": response_value,
+            "response_timestamp": x.response.clone().map(|x| x.0.to_rfc3339()),
+        })
+    }
+}
 fn str_to_chrono(value: &str) -> anyhow::Result<chrono::DateTime<chrono::Utc>> {
     // 2
     let value = format!("{}+00:00", value);
-    chrono::DateTime::from_str(&value).ok().context("Can't parse chrono date")
+    chrono::DateTime::from_str(&value)
+        .ok()
+        .context("Can't parse chrono date")
 }
 
 impl TryFrom<DBRequest> for ReqRes {
@@ -182,7 +193,6 @@ impl DB {
         //     .into_iter()
         //     .map(|x| ReqRes::try_from(x))
         //     .collect::<anyhow::Result<Vec<_>>>()?)
-
     }
 
     // pub async fn get_recent_responses(&self) -> anyhow::Result<Vec<ResponseData>> {
@@ -193,7 +203,6 @@ impl DB {
     //     Ok(result.into_iter().map(|x| ResponseData::try_from(x)).collect::<anyhow::Result<Vec<_>>>()?)
     // }
 }
-
 
 #[async_trait::async_trait]
 pub trait RequestStorage {

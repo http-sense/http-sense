@@ -1,10 +1,10 @@
-
-use std::{fs::{self, File}, path::{PathBuf}};
+use std::{
+    fs::{self, File},
+    path::PathBuf,
+};
 
 use anyhow::Context;
 use directories;
-
-
 
 pub const SUPABASE_PROJECT_URL: &'static str = "https://wfeoffbfmtjjzamwjlob.supabase.co";
 pub const SUPABASE_ANON_KEY: &'static str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmZW9mZmJmbXRqanphbXdqbG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA4NjU3ODMsImV4cCI6MTk4NjQ0MTc4M30.6S-W8RcMx7zhIwAkuukw3kv-0zylHntZbxBopaN6C5s";
@@ -28,7 +28,7 @@ pub fn get_data_dir() -> anyhow::Result<PathBuf> {
 //             Err(x) => {
 //                 return Err(x.into());
 //             },
-//             Ok(_) => unreachable!() // 
+//             Ok(_) => unreachable!() //
 //         }
 //     }
 
@@ -44,8 +44,6 @@ pub fn get_database_file() -> anyhow::Result<String> {
     let data_dir = std::env::temp_dir();
     fs::create_dir_all(&data_dir)?;
 
-
-    
     let file_name = get_random_string(30);
     // let data_dir = get_data_dir()?;
     let database_file_path = data_dir.join(format!("{file_name}.sqlite"));
@@ -56,12 +54,17 @@ pub fn get_database_file() -> anyhow::Result<String> {
         match create_new_res {
             Err(x) => {
                 return Err(x.into());
-            },
-            Ok(_) => unreachable!() // 
+            }
+            Ok(_) => unreachable!(), //
         }
     }
 
-    Ok(format!("sqlite://{}", database_file_path.to_str().context("Invalid Database Dir Path")?))
+    Ok(format!(
+        "sqlite://{}",
+        database_file_path
+            .to_str()
+            .context("Invalid Database Dir Path")?
+    ))
 }
 
 #[cfg(debug_assertions)]
@@ -73,8 +76,8 @@ pub fn get_database_file() -> anyhow::Result<String> {
         match create_new_res {
             Err(x) => {
                 return Err(x.into());
-            },
-            Ok(_) => unreachable!() // 
+            }
+            Ok(_) => unreachable!(), //
         }
     }
 
