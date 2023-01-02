@@ -52,15 +52,18 @@
 
 		let data = await resp.json();
 		for (const entry of data) {
-			console.log(entry)
-			entry.request.id = entry.id;
+
+			entry.request.id = entry.request_id;
+			if (entry.response) {
+				entry.response.id = entry.request_id;
+			}
 			if (!history[entry.request_id]) {
 				history[entry.request_id] = {request: entry.request}
 			}
 			history[entry.request_id].response = entry.response || history[entry.request_id].response
 		}
 		history = history
-		console.log(data)
+		console.log('history', history)
 	}
 	onMount(init_data)
 

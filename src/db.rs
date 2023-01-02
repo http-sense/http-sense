@@ -41,11 +41,12 @@ impl ReqRes {
 impl TryFrom<DBRequest> for ReqRes {
     type Error = anyhow::Error;
     fn try_from(value: DBRequest) -> anyhow::Result<Self> {
-        Ok(ReqRes {
+        dbg!(&value);
+        Ok(dbg!(ReqRes {
             request_id: value.request_id,
             request: serde_json::from_str(&value.request_content)?,
-            response: Response::parse_json(&value.request_content),
-        })
+            response: value.response_content.map(|x| serde_json::from_str(&x)).transpose()?,
+        }))
     }
 }
 
@@ -94,10 +95,9 @@ impl DB {
 
         // http_serde::header_map::serialize(&req.headers, ser)
         let _r = sqlx::query!("INSERT INTO request (content) VALUES (?)", content)
-            .fetch_all(&self.pool)
-            .await?;
-
-        Ok(1)
+            .execute(&self.pool)
+            .await?.last_insert_rowid();
+        Ok(_r as u64)
     }
 
     pub async fn insert_response(&self, request_id: u64, response: &Response) -> anyhow::Result<()> {

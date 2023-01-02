@@ -74,17 +74,17 @@ impl Response {
             Self::Success(e) => e.created_at,
         }
     }
-    pub fn parse_json(value: &str) -> Option<Self> {
-        if let Ok(x) = serde_json::from_str::<ResponseSuccessData>(&value) {
-            Some(Self::Success(x))
-        }
-        else if let Ok(x) = serde_json::from_str::<ResponseErrorData>(&value) {
-            Some(Self::Error(x))
-        }
-        else {
-            None
-        }
-    }
+    // pub fn parse_json(value: &str) -> Option<Self> {
+    //     if let Ok(x) = serde_json::from_str::<ResponseSuccessData>(&value) {
+    //         Some(Self::Success(x))
+    //     }
+    //     else if let Ok(x) = serde_json::from_str::<ResponseErrorData>(&value) {
+    //         Some(Self::Error(x))
+    //     }
+    //     else {
+    //         None
+    //     }
+    // }
 
 }
 

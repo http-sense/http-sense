@@ -34,7 +34,6 @@ async fn get_requests(
 ) -> AxumResult<impl IntoResponse> {
     let rows = state.db.get_recent_requests().await?;
     let rows = rows.into_iter().map(|x| x.to_json_value()).collect::<Vec<_>>();
-
     return Ok(Json(serde_json::json!(rows)));
 }
 
