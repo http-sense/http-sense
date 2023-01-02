@@ -1,25 +1,22 @@
-- [ ] Local UI: get it working with svelte
-    - [x] cors setup
-    - [ ] websocket
-    	- [x] Backend setup
-    	- [x] Frontend setup
-    	- [ ] Bootstrap setup
+- [ ] Local UI: make usable
     - [ ] UI improvements
 
-- [ ] Logging: log all incoming requests to cli
+- [ ] Logging: log all incoming requests to stdout
+- [ ] TUI Usage
+    - [ ] Give option for `htop` like TUI for non-web development
 - [ ] Improve Port selection
     - port-ranges: Pick first available if first is busy
 
 - [ ] Improve proxy
-    - Reduce the amount of headers being modified
-    - Add extra headers to store previous headers
-    - Maybe support redirects in better way
-    - Document all the headers modified
-    - Support streaming requests
-    - Support large requests
+    - Support large requests (Downloads and video/audio streams)
+        - Support streaming requests
         - Make requests exactly the same way as the client is making
             - multipart or whatever
         - which can't fit in memory
+    - Document all the headers modified
+    - Maybe support redirects in better way
+    - Reduce the amount of headers being modified
+    - Add extra headers to store previous headers
 
 - [ ] Socks5 Proxy integration
 - [ ] Support HTTP2 and HTTP3
