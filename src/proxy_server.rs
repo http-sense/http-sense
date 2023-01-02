@@ -153,6 +153,7 @@ async fn root(
         *req_count += 1;
         let request_id = *req_count;
         drop(req_count); // release mutex
+        request_id
     };
 
     state.event_tx.send(ProxyEvent::Request(request_id as u64, req.clone()))?;
