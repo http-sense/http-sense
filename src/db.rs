@@ -41,12 +41,11 @@ impl ReqRes {
 impl TryFrom<DBRequest> for ReqRes {
     type Error = anyhow::Error;
     fn try_from(value: DBRequest) -> anyhow::Result<Self> {
-        dbg!(&value);
-        Ok(dbg!(ReqRes {
+        Ok(ReqRes {
             request_id: value.request_id,
             request: serde_json::from_str(&value.request_content)?,
             response: value.response_content.map(|x| serde_json::from_str(&x)).transpose()?,
-        }))
+        })
     }
 }
 

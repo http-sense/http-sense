@@ -150,11 +150,9 @@ async fn root(
 
     let request_id = {
         let mut req_count = state.request_count.lock();
-        dbg!(&req_count);
         *req_count += 1;
         let request_id = *req_count;
         drop(req_count); // release mutex
-        dbg!(request_id)
     };
 
     state.event_tx.send(ProxyEvent::Request(request_id as u64, req.clone()))?;
