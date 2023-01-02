@@ -3,17 +3,24 @@ mod api_server;
 mod cli;
 mod config;
 mod db;
-mod model;
+mod models;
 mod proxy_server;
 mod socketio;
 mod axum_utils;
+mod bytes_util;
+#[macro_use]
+mod prelude;
+mod serde_util;
 mod supabase;
+
+
 mod supabase_auth;
 use anyhow::Context;
 use clap::Parser;
 use db::RequestStorage;
+use models::Request;
+use proxy_server::{RequestEvent, ProxyEvent};
 
-use proxy_server::ProxyEvent;
 
 
 use crate::{
@@ -23,13 +30,14 @@ use crate::{
     supabase_auth::create_user,
 };
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, hash::Hash};
 
 #[async_trait::async_trait(?Send)]
 trait EventConsumer {
     async fn consume(
         &mut self,
         mut rx: tokio::sync::broadcast::Receiver<ProxyEvent>,
+        mut tx: Option<tokio::sync::broadcast::Sender<RequestEvent<u64>>>,
         consumer_name: &str,
     ) -> anyhow::Result<()>;
 }
@@ -45,28 +53,29 @@ impl<T: RequestStorage> EventConsumer for T {
     async fn consume(
         &mut self,
         mut rx: tokio::sync::broadcast::Receiver<ProxyEvent>,
+        tx: Option<tokio::sync::broadcast::Sender<RequestEvent<u64>>>,
         _consumer_name: &str,
     ) -> anyhow::Result<()> {
-        // tracing::info!("Consumer attached: {}", consumer_name);
-        let mut requests: HashMap<uuid::Uuid, u64> = HashMap::new();
+        let mut requests: HashMap<u64, u64> = HashMap::new();
         loop {
             let value = rx.recv().await?;
 
             match value {
-                ProxyEvent::ResponseRecv(rid, res) => {
+                RequestEvent::Response(rid, res) => {
                     let store_id = requests
                         .remove(&rid)
                         .context("Got response without request")?;
-                    self.store_response(store_id, &res).await?
+                    self.store_response(store_id, &res).await?;
+                    if let Some(tx) = tx.as_ref() {
+                        tx.send(RequestEvent::Response(store_id, res))?;
+                    };
                 }
-                ProxyEvent::RequestRecv(rid, req) => {
+                RequestEvent::Request(rid, req) => {
                     let store_id = self.store_request(&req).await?;
                     requests.insert(rid, store_id);
-                }
-                ProxyEvent::RequestError(rid, error) => {
-                    let store_id = requests.remove(&rid).context("Got Error without request")?;
-                    tracing::error!("Couldn't finish the request. Error: {:?}", &error);
-                    self.store_error(store_id, &error).await?;
+                    if let Some(tx) = tx.as_ref() {
+                        tx.send(RequestEvent::Request(store_id, req))?;
+                    }
                 }
             }
         }
@@ -84,9 +93,15 @@ async fn main() -> anyhow::Result<()> {
     let _proxy_db = shared_db.clone();
     let ui_db = shared_db.clone();
     let args = cli::CLIArgs::parse();
+
+    // Proxy Event Queue
     let (tx, rx) = tokio::sync::broadcast::channel(128);
     let rx2 = tx.subscribe();
     let rx3 = tx.subscribe();
+
+    // Db Events
+    let (db_tx, db_rx) = tokio::sync::broadcast::channel(128);
+
     let mut supabase_db = None;
     if args.publish {
         let user = create_user().await?;
@@ -107,7 +122,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let publish_future = if let Some(sup_db) = supabase_db.as_mut() {
-        sup_db.consume(rx2, "supabase_db")
+        sup_db.consume(rx2, None, "supabase_db")
     } else {
         // Hack to get around
         Box::pin(infinite_sleep())
@@ -120,11 +135,11 @@ async fn main() -> anyhow::Result<()> {
             tracing::error!("Proxy server has stopped");
             v?;
         }
-        j = api_server::start_server(ui_db, args.api_port, &args.api_addr, rx3) => {
+        j = api_server::start_server(ui_db, args.api_port, &args.api_addr, db_rx) => {
             tracing::error!("UI server has stopped");
             j?;
         }
-        e = shared_db.consume(rx, "local_db") => {
+        e = shared_db.consume(rx, Some(db_tx), "local_db") => {
             tracing::error!("DB Consumer has stopped {:?}", e);
         }
         r = publish_future => {

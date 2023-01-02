@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use crate::{
     db::RequestStorage,
-    model::{RequestData, ResponseData, ResponseError},
+    models::{Request, ResponseSuccessData, ResponseErrorData, Response},
     supabase_auth::AuthenticatedUser,
 };
 use anyhow::Context;
@@ -68,39 +68,26 @@ impl SupabaseDb {
 
 #[async_trait::async_trait]
 impl RequestStorage for SupabaseDb {
-    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
+    async fn store_request(&mut self, req: &Request) -> anyhow::Result<u64> {
         self.insert_in_table(
             "request",
             &json!({
-                "content": req.serialize_response(),
+                "content": req.serialize_utf8_body(),
                 "user_id": self.user.uid(),
-                "created_at": req.createdAt.to_rfc3339()
+                "created_at": req.created_at.to_rfc3339()
             }),
         )
         .await
     }
 
-    async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
+    async fn store_response(&mut self, request_id: u64, res: &Response) -> anyhow::Result<()> {
         self.insert_in_table(
             "response",
             &json!({
-                "content": res.serialize_response(),
+                "content": res.serialize_utf8_body(),
                 "request_id": request_id,
                 "user_id": self.user.uid(),
-                "created_at": res.createdAt.to_rfc3339()
-            }),
-        )
-        .await?;
-        Ok(())
-    }
-    async fn store_error(&mut self, request_id: u64, res: &ResponseError) -> anyhow::Result<()> {
-        self.insert_in_table(
-            "response",
-            &json!({
-                "content": res.serialize_response(),
-                "request_id": request_id,
-                "user_id": self.user.uid(),
-                "created_at": res.createdAt.to_rfc3339()
+                "created_at": res.created_at().to_rfc3339()
             }),
         )
         .await?;
@@ -125,12 +112,12 @@ mod tests {
 			create_user().await.unwrap(),
 		);
 		let r = db
-			.store_request(&RequestData {
+			.store_request(&Request {
 				headers: Default::default(),
 				uri: "/hello".parse().unwrap(),
 				method: http::Method::GET,
 				body: Bytes::from_static(b"Just checking"),
-				createdAt: chrono::Utc::now(),
+				created_at: chrono::Utc::now(),
 			})
 			.await;
 		dbg!(r);

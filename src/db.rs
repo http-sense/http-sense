@@ -1,14 +1,12 @@
-use std::str::FromStr;
 use std::sync::Arc;
 
-use crate::model::RequestData;
-use crate::model::ResponseData;
-use crate::model::ResponseError;
+use crate::models::Response;
+use crate::models::Request;
+use crate::models::ResponseSuccessData;
 use anyhow::Context;
 
 use serde::Serialize;
 use sqlx::sqlite::SqlitePoolOptions;
-use sqlx::Connection;
 use sqlx::SqlitePool;
 
 #[derive(Debug, Clone)]
@@ -19,69 +17,39 @@ pub struct DB {
 #[derive(Clone, Debug, Serialize)]
 pub struct DBRequest {
     request_id: i64,
-
-    request_ts: String,
     request_content: String,
-
-    response_ts: Option<String>,
     response_content: Option<String>,
 }
 
 #[derive(Clone, Debug)]
 pub struct ReqRes {
     pub request_id: i64,
-
-    pub request: (chrono::DateTime<chrono::Utc>, RequestData),
-
-    pub response: Option<(chrono::DateTime<chrono::Utc>, ResponseData)>,
+    pub request: Request,
+    pub response: Option<Response>,
 }
 
 impl ReqRes {
-    fn to_json_value(&self) -> serde_json::Value {
-        let x = self;
-        let request_value = x.request.1.serialize_response();
-        let response_value = x.response.clone().map(|x| x.1.serialize_response());
+    pub fn to_json_value(&self) -> serde_json::Value {
         serde_json::json!({
-            "request_id": x.request_id,
-            "request_data": request_value,
-            "request_timestamp": x.request.0.to_rfc3339(),
-            "response_data": response_value,
-            "response_timestamp": x.response.clone().map(|x| x.0.to_rfc3339()),
+            "request_id": self.request_id,
+            "request": self.request.serialize_utf8_body(),
+            "response": self.response.clone().map(|x| x.serialize_utf8_body()),
         })
     }
-}
-fn str_to_chrono(value: &str) -> anyhow::Result<chrono::DateTime<chrono::Utc>> {
-    // 2
-    let value = format!("{}+00:00", value);
-    chrono::DateTime::from_str(&value)
-        .ok()
-        .context("Can't parse chrono date")
 }
 
 impl TryFrom<DBRequest> for ReqRes {
     type Error = anyhow::Error;
     fn try_from(value: DBRequest) -> anyhow::Result<Self> {
-        let request_time = str_to_chrono(&value.request_ts)?;
-        let mut response: Option<(chrono::DateTime<chrono::Utc>, ResponseData)> = None;
-        if let Some(res_ts) = value.response_ts {
-            response = Some((
-                str_to_chrono(&res_ts)?,
-                serde_json::from_str(
-                    &value
-                        .response_content
-                        .context("response body is invalid or missing")?,
-                )?,
-            ))
-        }
         Ok(ReqRes {
             request_id: value.request_id,
-            request: (request_time, serde_json::from_str(&value.request_content)?),
-            response,
+            request: serde_json::from_str(&value.request_content)?,
+            response: Response::parse_json(&value.request_content),
         })
     }
 }
 
-impl TryFrom<DBRequest> for RequestData {
+impl TryFrom<DBRequest> for Request {
     type Error = anyhow::Error;
     fn try_from(value: DBRequest) -> anyhow::Result<Self> {
         let result: Self = serde_json::from_str(&value.request_content)?;
@@ -89,7 +57,7 @@ impl TryFrom<DBRequest> for RequestData {
     }
 }
 
-impl TryFrom<DBRequest> for ResponseData {
+impl TryFrom<DBRequest> for ResponseSuccessData {
     type Error = anyhow::Error;
     fn try_from(value: DBRequest) -> anyhow::Result<Self> {
         let result: Self = serde_json::from_str(
@@ -120,7 +88,7 @@ impl DB {
         Ok(())
     }
 
-    pub async fn insert_request(&self, req: &RequestData) -> anyhow::Result<u64> {
+    pub async fn insert_request(&self, req: &Request) -> anyhow::Result<u64> {
         // Method
         let content = serde_json::to_string(req)?;
 
@@ -132,12 +100,10 @@ impl DB {
         Ok(1)
     }
 
-    pub async fn insert_response(&self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
-        // Method
-        let content = serde_json::to_string(res)?;
+    pub async fn insert_response(&self, request_id: u64, response: &Response) -> anyhow::Result<()> {
+        let content = serde_json::to_string(response)?;
 
         let req_id = request_id as i64;
-        // http_serde::header_map::serialize(&req.headers, ser)
         sqlx::query!(
             "INSERT INTO response (content, request_id) VALUES (?, ?)",
             content,
@@ -148,92 +114,49 @@ impl DB {
         Ok(())
     }
 
-    pub async fn insert_error(&self, request_id: u64, res: &ResponseError) -> anyhow::Result<()> {
-        // Method
-        let content = serde_json::to_string(res)?;
-
-        let req_id = request_id as i64;
-        // http_serde::header_map::serialize(&req.headers, ser)
-        sqlx::query!(
-            "INSERT INTO response (content, request_id) VALUES (?, ?)",
-            content,
-            req_id
-        )
-        .fetch_all(&self.pool)
-        .await?;
-        Ok(())
-    }
-
-    pub async fn get_recent_requests(&self) -> anyhow::Result<Vec<DBRequest>> {
-        // let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM request")
-        // // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
-        //     .fetch_all(&self.pool)
-        //     .await?;
-
+    pub async fn get_recent_requests(&self) -> anyhow::Result<Vec<ReqRes>> {
         let result = sqlx::query_as!(
             DBRequest,
             "
             SELECT
                 req.id as request_id,
                 res.content as response_content,
-                res.created_at as response_ts,
-                req.content as request_content,
-                req.created_at as request_ts
+                req.content as request_content
             FROM request req
             LEFT JOIN response res
             ON res.request_id = req.id;
         "
         )
-        // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
         .fetch_all(&self.pool)
         .await?;
-        return Ok(result);
-
-        // Ok(result
-        //     .into_iter()
-        //     .map(|x| ReqRes::try_from(x))
-        //     .collect::<anyhow::Result<Vec<_>>>()?)
+        return Ok(result.into_iter().map(|x| x.try_into()).collect::<anyhow::Result<Vec<_>>>()?);
     }
-
-    // pub async fn get_recent_responses(&self) -> anyhow::Result<Vec<ResponseData>> {
-    //     let result = sqlx::query_as!(DBRow, "SELECT uuid, content FROM response")
-    //     // let result = sqlx::query_as!(DBRow, "SELECT content FROM request")
-    //         .fetch_all(&self.pool)
-    //         .await?;
-    //     Ok(result.into_iter().map(|x| ResponseData::try_from(x)).collect::<anyhow::Result<Vec<_>>>()?)
-    // }
 }
 
 #[async_trait::async_trait]
 pub trait RequestStorage {
-    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64>;
-    async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()>;
-    async fn store_error(&mut self, request_id: u64, res: &ResponseError) -> anyhow::Result<()>;
+    // Using `u64` here, but can be made generic T: Hash+Clone if a provider does not have u64 id
+    async fn store_request(&mut self, req: &Request) -> anyhow::Result<u64>;
+    async fn store_response(&mut self, request_id: u64, res: &Response) -> anyhow::Result<()>;
 }
 
 #[async_trait::async_trait]
 impl RequestStorage for DB {
-    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
+    async fn store_request(&mut self, req: &Request) -> anyhow::Result<u64> {
         self.insert_request(req).await
     }
-    async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
+    async fn store_response(&mut self, request_id: u64, res: &Response) -> anyhow::Result<()> {
         self.insert_response(request_id, res).await
-    }
-    async fn store_error(&mut self, request_id: u64, res: &ResponseError) -> anyhow::Result<()> {
-        self.insert_error(request_id, res).await
     }
 }
 
 #[async_trait::async_trait]
 impl RequestStorage for Arc<DB> {
-    async fn store_request(&mut self, req: &RequestData) -> anyhow::Result<u64> {
+    async fn store_request(&mut self, req: &Request) -> anyhow::Result<u64> {
         self.insert_request(req).await
     }
-    async fn store_response(&mut self, request_id: u64, res: &ResponseData) -> anyhow::Result<()> {
+    async fn store_response(&mut self, request_id: u64, res: &Response) -> anyhow::Result<()> {
         self.insert_response(request_id, res).await
-    }
-    async fn store_error(&mut self, request_id: u64, res: &ResponseError) -> anyhow::Result<()> {
-        self.insert_error(request_id, res).await
     }
 }
 

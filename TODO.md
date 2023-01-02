@@ -1,9 +1,10 @@
 - [ ] Local UI: get it working with svelte
     - [x] cors setup
     - [ ] websocket
-    	- Backend setup
-    	- Frontend setup
-    	- Bootstrap setup
+    	- [x] Backend setup
+    	- [x] Frontend setup
+    	- [ ] Bootstrap setup
+    - [ ] UI improvements
 
 - [ ] Logging: log all incoming requests to cli
 - [ ] Improve Port selection
@@ -12,8 +13,13 @@
 - [ ] Improve proxy
     - Reduce the amount of headers being modified
     - Add extra headers to store previous headers
+    - Maybe support redirects in better way
     - Document all the headers modified
     - Support streaming requests
+    - Support large requests
+        - Make requests exactly the same way as the client is making
+            - multipart or whatever
+        - which can't fit in memory
 
 - [ ] Socks5 Proxy integration
 - [ ] Support HTTP2 and HTTP3

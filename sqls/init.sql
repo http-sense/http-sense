@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS request (
 	id INTEGER PRIMARY KEY,
 	content TEXT NOT NULL,
-	created_at TEXT NOT NULL DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))
+	uuid TEXT NOT NULL
 );
+
 CREATE TABLE IF NOT EXISTS response (
 	id INTEGER PRIMARY KEY,
 	content TEXT NOT NULL,
 	request_id INTEGER NOT NULL,
-	created_at TEXT NOT NULL DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')),
 	FOREIGN KEY(request_id) REFERENCES request(id) ON DELETE CASCADE
 )

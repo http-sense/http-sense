@@ -3,8 +3,8 @@ use axum::extract::ws::{
     Message, WebSocket, WebSocketUpgrade
 };
 use crate::axum_utils::*;
-use crate::db::{DB};
-use crate::proxy_server::ProxyEvent;
+use crate::db::{DB, ReqRes};
+use crate::proxy_server::RequestEvent;
 use tower_http::cors::CorsLayer;
 
 use axum::{
@@ -22,7 +22,7 @@ use std::{net::SocketAddr, sync::Arc};
 #[derive(Debug)]
 struct AppState {
     db: Arc<DB>,
-    event_rx: tokio::sync::broadcast::Receiver<ProxyEvent>
+    event_rx: tokio::sync::broadcast::Receiver<RequestEvent<u64>>
 }
 static PROJECT_DIR: Dir<'_> = include_dir!("$OUT_DIR/frontend_build");
 
@@ -33,7 +33,7 @@ async fn get_requests(
     _request: Request<Body>,
 ) -> AxumResult<impl IntoResponse> {
     let rows = state.db.get_recent_requests().await?;
-    let rows = rows.into_iter().map(|x| x).collect::<Vec<_>>();
+    let rows = rows.into_iter().map(|x| x.to_json_value()).collect::<Vec<_>>();
 
     return Ok(Json(serde_json::json!(rows)));
 }
@@ -116,7 +116,7 @@ async fn set_websocket(
 }
 
 
-pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str, event_rx: tokio::sync::broadcast::Receiver<ProxyEvent>) -> anyhow::Result<()> {
+pub async fn start_server(db: Arc<DB>, ui_port: u16, ui_addr: &str, event_rx: tokio::sync::broadcast::Receiver<RequestEvent<u64>>) -> anyhow::Result<()> {
     let app_state = Arc::new(AppState { db, event_rx });
 
     let app = Router::new()

@@ -11,3 +11,10 @@ export function get_api_url(): URL {
 	}
 	return new URL(_base_api_url);
 }
+
+export function get_ws_url(): URL {
+	let url = get_api_url();
+	url.protocol = url.protocol=='https'?'wss':'ws';
+	url.pathname += '/ws'
+	return url
+}

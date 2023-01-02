@@ -894,6 +894,7 @@ dependencies = [
  "log",
  "mime",
  "mime_guess",
+ "parking_lot 0.12.1",
  "postgrest",
  "rand",
  "reqwest",

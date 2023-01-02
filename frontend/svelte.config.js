@@ -14,7 +14,7 @@ const config = {
 		adapter: adapter({
 			pages: build_dir,
 			assets: build_dir,
-			fallback: 'index.html'
+			fallback: 'index.html' // true SPA
 		}),
     prerender: {entries: []}
 	}
