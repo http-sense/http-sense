@@ -43,7 +43,7 @@ https://www.httpsense.com/526a0f41-a617-4f9e-8b40-f18d40104f99/#YXN5MW9wdE1VcXVW
 
 # Installation
 
-If you do not have `cargo` installed, please refer to the above section. Once you have it instaled, proceed with the installation for HTTP Sense using the following command:
+If you do not have `cargo` installed, please refer to the above section. Once you have it installed, proceed with the installation for HTTP Sense using the following command:
 
 ```bash
 # To get the latest and greatest version
