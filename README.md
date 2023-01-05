@@ -101,7 +101,7 @@ Options:
 # Contributing
 If you're looking to contribute to HTTP Sense, please read and follow the guidelines from [CONTRIBUTING.md](https://github.com/http-sense/http-sense/blob/main/CONTRIBUTING.md).
 
-# Maintainers
+# Contributors
 <a href="https://github.com/http-sense/http-sense/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=http-sense/http-sense" />
 </a>
