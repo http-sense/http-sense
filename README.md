@@ -106,4 +106,7 @@ If you're looking to contribute to HTTP Sense, please read and follow the guidel
   <img src="https://contrib.rocks/image?repo=http-sense/http-sense" />
 </a>
 
+# Maintainers | Code Owners
+- [Ankit Saini](https://github.com/nkitsaini)
+- [Atchyut Pulavarthi](https://github.com/theonly1me)
 
