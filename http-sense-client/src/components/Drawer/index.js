@@ -93,7 +93,7 @@ const SideDrawer = ({ selectedRow, isOpen, onClose }) => {
               </Flex>
               <Flex flexDir="column" alignItems="center">
                 <Text fontSize="1.4rem" fontWeight="semibold">
-                  REQUEST HEADERS
+                  REQUESTS
                 </Text>
 
                 <Code
